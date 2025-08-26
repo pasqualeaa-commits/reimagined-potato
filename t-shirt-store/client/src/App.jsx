@@ -149,7 +149,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/profilo" element={<Profilo user={user} onLogout={handleLogout} onUpdateUser={setUser} />} />
           <Route path="/recupero-password" element={<RecuperoPassword />} />
-          <Route path="/reimposta-password/:token" element={<ReimpostaPassword />} />
+          <Route path="/reset-password/:token" element={<ReimpostaPassword />} />
         </Routes>
       </main>
       <Footer />
