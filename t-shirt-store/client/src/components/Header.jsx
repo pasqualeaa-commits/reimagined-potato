@@ -1,48 +1,58 @@
 // components/Header.jsx
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { FaShoppingCart } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaShoppingCart, FaBars, FaTimes } from 'react-icons/fa';
 
-const Header = ({ cartCount, user }) => (
-  <header className="header flex items-center justify-between px-8 py-4">
-    {/* Sinistra: nome negozio */}
-    <div>
-      <Link
-        to="/"
-        className="shop-name"
-      >
-        Ancora Non So.com
-      </Link>
-    </div>
-    {/* Centro: benvenuto utente */}
-    <div>
-      {user && (
-        <Link to="/profilo" className="font-bold text-blue-600 hover:underline text-lg">
-          Benvenuto {user.firstName}!
+const Header = ({ cartCount, user, onLogout }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const toggleMenu = () => setIsMenuOpen((v) => !v);
+  const closeMenu = () => setIsMenuOpen(false);
+
+  const handleLogout = () => {
+    onLogout();
+    navigate('/');
+    closeMenu();
+  };
+
+  return (
+    <header className="header">
+      {/* Hamburger a sinistra */}
+      <button onClick={toggleMenu} className="menu-toggle" aria-label="Apri menu">
+        {isMenuOpen ? <FaTimes /> : <FaBars />}
+      </button>
+
+      {/* Titolo al centro */}
+      <div className="shop-name-container">
+        <Link to="/" className="shop-name">Ancora Non So.com</Link>
+      </div>
+
+      {/* Lato destro: carrello + (menu UL che si apre in mobile) */}
+      <nav className="navbar">
+        <ul className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
+              <li><Link to="/products" className="nav-link" onClick={closeMenu}>Prodotti</Link></li>
+              <li><Link to="/contact" className="nav-link" onClick={closeMenu}>Contattaci</Link></li>
+              <li><Link to="/about" className="nav-link" onClick={closeMenu}>Chi Siamo</Link></li>
+          {!user ? (
+            <>
+              <li><Link to="/login" className="nav-link" onClick={closeMenu}>Login</Link></li>
+              <li><Link to="/register" className="nav-link" onClick={closeMenu}>Registrati</Link></li>
+            </>
+          ) : (
+            <>
+              <li><Link to="/profilo" className="nav-link" onClick={closeMenu}>Profilo</Link></li>
+              <li><button onClick={handleLogout} className="logout-button">Logout</button></li>
+            </>
+          )}
+        </ul>
+         <Link to="/cart" className="cart-link" onClick={closeMenu} aria-label="Carrello">
+          <FaShoppingCart />
+          {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
         </Link>
-      )}
-    </div>
-    {/* Destra: menu carrello, login/registrati */}
-    <nav className="navbar flex items-center space-x-4">
-      {!user && (
-        <>
-          <Link to="/login" className="mx-2 text-blue-600 hover:underline">Login</Link>
-          <Link to="/register" className="mx-2 text-blue-600 hover:underline">Registrati</Link>
-        </>
-      )}
-      <Link
-        to="/cart"
-        className="px-4 py-2 bg-gray-100 rounded shadow hover:bg-blue-100 text-gray-700 no-underline transition duration-300 flex items-center relative"
-      >
-        <FaShoppingCart className="text-2xl mr-2" />
-        {cartCount > 0 && (
-          <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-            {cartCount}
-          </span>
-        )}
-      </Link>
-    </nav>
-  </header>
-);
+      </nav>
+    </header>
+  );
+};
 
 export default Header;

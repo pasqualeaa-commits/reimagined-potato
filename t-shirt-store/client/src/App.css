@@ -20,14 +20,15 @@ body {
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative; /* Importante per il posizionamento del menu */
 }
 
-.header h1 {
-  margin: 0;
-  font-size: 1.5rem;
+.shop-name-container {
+  display: flex;
+  align-items: center;
 }
 
-.header .shop-name {
+.shop-name {
   font-size: 2.2rem;
   font-weight: 800;
   color: #2563eb;
@@ -35,12 +36,70 @@ body {
   text-decoration: none;
 }
 
-.cart-icon {
-  position: relative;
-  font-size: 1.8rem;
+.user-welcome {
+  display: flex;
+  align-items: center;
 }
 
-.cart-icon span {
+.welcome-link {
+  font-weight: bold;
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 1.1rem;
+}
+
+.welcome-link:hover {
+  text-decoration: underline;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 1rem;
+}
+
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #333;
+  z-index: 1001; /* Assicura che sia sopra il menu */
+}
+
+.nav-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+}
+
+.nav-link:hover {
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+.cart-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  font-size: 1.5rem;
+  padding: 0.5rem;
+}
+
+.cart-count {
   position: absolute;
   top: -8px;
   right: -8px;
@@ -49,6 +108,16 @@ body {
   border-radius: 50%;
   padding: 2px 6px;
   font-size: 0.8rem;
+}
+
+.logout-button {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
 /* Main content */
@@ -306,25 +375,7 @@ main {
   padding-bottom: 48px;
 }
 
-/* Navbar */
-.navbar a {
-  display: inline-block;
-  padding: 0.5rem 1.2rem;
-  margin-left: 0.5rem;
-  background: #f3f4f6;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-  color: #2563eb;
-  font-weight: 500;
-  text-decoration: none;
-  transition: background 0.2s;
-}
-
-.navbar a:hover {
-  background: #dbeafe;
-}
-
-/* Modifiche per il layout delle caselle di testo (text box) */
+/* Form */
 .form-input {
   font-size: 0.95rem;
   width: 100%;
@@ -337,6 +388,7 @@ main {
   margin-bottom: 0.5rem;
   transition: border-color 0.2s, box-shadow 0.2s;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.07);
+  box-sizing: border-box; /* Include padding e border nella larghezza */
 }
 
 .form-input:focus {
@@ -376,4 +428,146 @@ button[type="submit"] {
 
 button[type="submit"]:hover {
   background: linear-gradient(90deg, #4f46e5 0%, #2563eb 100%);
+}
+
+/* Media Queries per il responsive design */
+
+/* Desktop: Nascondi il menu hamburger e mostra i link normalmente */
+@media (min-width: 769px) {
+  .menu-toggle {
+    display: none;
+  }
+  
+  .nav-links {
+    display: flex !important;
+    flex-direction: row;
+    position: static;
+    background-color: transparent;
+    box-shadow: none;
+    width: auto;
+  }
+}
+
+/* Mobile: Implementa il menu a tendina */
+@media (max-width: 768px) {
+  /* Header layout mobile */
+  .header {
+    flex-wrap: nowrap; /* Cambiato da wrap a nowrap */
+    padding: 1rem;
+    align-items: center;
+  }
+
+  /* Nome negozio al centro */
+  .shop-name-container {
+    flex-grow: 1;
+    text-align: center;
+  }
+
+  .shop-name {
+    font-size: 1.8rem;
+  }
+
+  /* Bottone menu a sinistra */
+  .menu-toggle {
+    display: block;
+    margin-right: 1rem;
+  }
+
+  /* Carrello a destra */
+  .cart-link {
+    margin-left: 1rem;
+  }
+
+  /* Navbar container - posizionato assolutamente */
+  .navbar {
+    position: static; /* Reset position */
+  }
+
+  /* Link del menu: posizionati assolutamente rispetto all'header */
+  .nav-links {
+    display: none !important;
+    flex-direction: column;
+    position: absolute;
+    top: calc(100% + 1px); /* Subito sotto l'header */
+    left: 0; /* Allinea a sinistra sotto il menu hamburger */
+    right: 0; /* Occupa tutta la larghezza */
+    background-color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-top: 1px solid #ddd;
+    z-index: 1000;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Menu aperto */
+  .nav-links.open {
+    display: flex !important;
+  }
+
+  /* Styling dei link nel menu mobile */
+  .nav-links li {
+    width: 100%;
+    margin: 0;
+  }
+
+  .nav-link {
+    width: 100%;
+    padding: 1rem 2rem;
+    text-align: left;
+    display: block;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+    box-sizing: border-box;
+  }
+
+  .nav-link:hover {
+    background-color: #f8f9fa;
+  }
+
+  .nav-links li:last-child .nav-link {
+    border-bottom: none;
+  }
+
+  /* Logout button nel menu mobile */
+  .logout-button {
+    width: calc(100% - 2rem);
+    margin: 1rem;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    border-radius: 4px;
+  }
+
+  /* Form responsive su mobile */
+  .form-input {
+    max-width: none; /* Rimuovi il max-width su mobile */
+    font-size: 16px; /* Evita lo zoom su iOS */
+  }
+
+  form {
+    padding: 1rem; /* Riduci il padding sui lati */
+    margin: 0 1rem; /* Aggiungi margini per evitare che tocchi i bordi */
+  }
+
+  /* Container responsive */
+  .checkout-container,
+  .home-container,
+  .cart-container,
+  .product-detail-container {
+    margin: 0 1rem; /* Aggiungi margini laterali */
+    padding: 1rem; /* Riduci il padding */
+    border-radius: 8px;
+  }
+
+  /* Product detail layout su mobile */
+  .product-detail-content {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .product-detail-image {
+    width: 100%;
+    height: 300px;
+    max-width: 400px;
+    margin: 0 auto;
+  }
 }

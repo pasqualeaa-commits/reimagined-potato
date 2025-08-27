@@ -17,6 +17,8 @@ import Login from './pages/Login';
 import Profilo from './pages/Profilo';
 import RecuperoPassword from './pages/RecuperoPassword';
 import ReimpostaPassword from './pages/ReimpostaPassword';
+import About from './pages/About';
+import Contact from './pages/Contact';
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
@@ -150,6 +152,8 @@ function App() {
           <Route path="/profilo" element={<Profilo user={user} onLogout={handleLogout} onUpdateUser={setUser} />} />
           <Route path="/recupero-password" element={<RecuperoPassword />} />
           <Route path="/reset-password/:token" element={<ReimpostaPassword />} />
+          <Route path='/about' element={<About />} />
+          <Route path='/contact' element={<Contact />} />
         </Routes>
       </main>
       <Footer />

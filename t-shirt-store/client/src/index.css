@@ -29,11 +29,11 @@ body {
   min-width: 320px;
 }
 
-#root { /* Aggiunto stile per l'elemento root */
+#root {
   width: 100%;
   height: 100%;
-  display: flex; /* Assicura che l'App possa espandersi */
-  flex-direction: column; /* Organizza gli elementi in colonna */
+  display: flex;
+  flex-direction: column;
 }
 
 
@@ -71,7 +71,7 @@ button:focus-visible {
   font-size: 1em;
   border-top: 1px solid #444;
 }
-
+/*
 .navbar ul {
   display: flex !important;
   flex-direction: row !important;
@@ -79,8 +79,30 @@ button:focus-visible {
   list-style: none;
   margin: 0;
   padding: 0;
-}
+}*/
 
 .navbar li {
   display: flex;
+}
+
+/* Media Queries per il responsive design */
+@media (max-width: 768px) {
+  /* Adatta il footer su schermi piccoli */
+  .footer {
+    padding: 12px 10px;
+    font-size: 0.9em;
+  }
+
+  /* Rendi la navbar verticale su mobile */
+  .navbar ul {
+    flex-direction: column !important;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .navbar a {
+    width: 100%;
+    text-align: center;
+    padding: 0.75rem 0;
+  }
 }
