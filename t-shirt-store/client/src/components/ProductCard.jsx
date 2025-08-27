@@ -12,15 +12,19 @@ const ProductCard = ({ product, onAddToCart }) => {
     });
   };
 
+  const price = Number(product.price);
+
   return (
     <div className="product-card">
       <Link to={`/product/${product.id}`} className="product-link">
-        <img src={product.coverImage} alt={product.name} className="product-image" />
+        <img src={product.cover_image} alt={product.name} className="product-image" />
       </Link>
       <div className="product-info">
         <h3>{product.name}</h3>
-        <p>€{product.price.toFixed(2)}</p>
-        <button onClick={handleAddToCartClick}>Aggiungi al carrello</button>
+        <span className="product-price">
+          {price ? price.toFixed(2) + ' €' : 'N/A'}
+        </span>
+        {/* <button onClick={handleAddToCartClick}>Aggiungi al carrello</button> */}
       </div>
     </div>
   );

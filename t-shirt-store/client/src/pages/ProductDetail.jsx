@@ -1,89 +1,82 @@
-import React, { useState, useEffect  } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { products } from '../data/products';
-import ReactCountryFlag from "react-country-flag";
+import React, { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import axios from "axios";
 
 const ProductDetail = ({ onAddToCart }) => {
-    const { productId } = useParams();
-    const product = products.find(p => p.id === parseInt(productId));
-
-  if (!product) {
-    return <h2>Prodotto non trovato!</h2>;
-  }
-
-  const [selectedLanguage, setSelectedLanguage] = useState(product.languages?.[0] || "");
-  const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || "");
-  const [displayedImage, setDisplayedImage] = useState(product.images[product.languages?.[0]] || "");
+  const { productId } = useParams();
+  const [product, setProduct] = useState(null);
+  const [selectedLanguage, setSelectedLanguage] = useState("IT");
+  const [selectedSize, setSelectedSize] = useState("");
 
   useEffect(() => {
-    if (product && product.images && product.images[selectedLanguage]) {
-      setDisplayedImage(product.images[selectedLanguage]);
-    }
-  }, [selectedLanguage, product]);
+    axios.get(`http://localhost:3001/api/products/${productId}`)
+      .then(res => {
+        setProduct(res.data);
+        const langs = typeof res.data.languages === "string"
+          ? res.data.languages.split(",").map(l => l.trim())
+          : res.data.languages;
+        setSelectedLanguage(langs[0]);
+        setSelectedSize(res.data.sizes?.split(",")[0] || "");
+      })
+      .catch(err => console.error('Errore caricamento prodotto:', err));
+  }, [productId]);
 
-  const langFlags = {
-    English: "GB",
-    Français: "FR",
-    Español: "ES",
-    Deutsch: "DE",
-    Italiano: "IT",
-  };
+  if (!product) return <h2>Prodotto non trovato!</h2>;
 
-  const handleAddToCartWithOptions = () => {
-    onAddToCart(product, { size: selectedSize, language: selectedLanguage });
-  };
+  const langs = typeof product.languages === "string"
+    ? product.languages.split(",").map(l => l.trim())
+    : product.languages;
+
+  const sizes = typeof product.sizes === "string"
+    ? product.sizes.split(",").map(s => s.trim())
+    : product.sizes;
+
+  // Cambia solo l'immagine in base alla lingua selezionata
+  const description = product.description; 
+  const image = product.images[selectedLanguage] || product.images.IT;
 
   return (
     <div className="product-detail-container">
-      <Link to="/" className="back-button">← Torna alla Home</Link>
+      <Link to="/products" className="back-button">← Indietro</Link>
       <div className="product-detail-content">
-        <img src={displayedImage} alt={product.name} className="product-detail-image" />
+        <img src={image} alt={product.name} className="product-detail-image" />
         <div className="product-detail-info">
           <h1>{product.name}</h1>
-          <p className="product-detail-price">€{product.price.toFixed(2)}</p>
-          
+          <p className="product-detail-price">
+            <span>
+              {Number(product.price).toFixed(2) + " €"}
+            </span>
+          </p>
           <div className="options">
-            {product.sizes?.length > 0 && (
-              <div>
-                <label htmlFor="size-select">Taglia:</label>
-                <select 
-                  id="size-select" 
-                  value={selectedSize} 
-                  onChange={(e) => setSelectedSize(e.target.value)}
-                >
-                  {product.sizes.map(size => (
-                    <option key={size} value={size}>{size}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {product.languages?.length > 0 && (
-              <div>
-                <label htmlFor="lang-select">Lingua:</label>
-                <select 
-                  id="lang-select" 
-                  value={selectedLanguage} 
-                  onChange={(e) => setSelectedLanguage(e.target.value)}
-                >
-                  {product.languages.map(lang => (
-                    <option key={lang} value={lang}>
-                      {langFlags[lang] && (
-                        <ReactCountryFlag
-                          countryCode={langFlags[lang]}
-                          svg
-                          style={{ marginRight: "8px" }}
-                        />
-                      )}
-                      {lang}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <div>
+              <label htmlFor="size-select">Taglia:</label>
+              <select
+                id="size-select"
+                value={selectedSize}
+                onChange={e => setSelectedSize(e.target.value)}
+                className="modern-select"
+              >
+                {sizes.map(size => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="language-select">Lingua:</label>
+              <select
+                id="language-select"
+                value={selectedLanguage}
+                onChange={e => setSelectedLanguage(e.target.value)}
+                className="modern-select"
+              >
+                {langs.map(lang => (
+                  <option key={lang} value={lang}>{lang}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <p className="product-detail-description">{product.description}</p>
-          <button onClick={handleAddToCartWithOptions} className="add-to-cart-button">
+          <p className="product-detail-description">{description}</p>
+          <button onClick={() => onAddToCart(product, { size: selectedSize, language: selectedLanguage })} className="add-to-cart-button">
             Aggiungi al carrello
           </button>
         </div>

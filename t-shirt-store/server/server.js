@@ -32,6 +32,7 @@ const transporter = nodemailer.createTransport({
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/Maglie', express.static(__dirname + '/Maglie'));
 
 // Middleware per la verifica del token JWT
 const authenticateToken = (req, res, next) => {
@@ -104,6 +105,19 @@ async function createTables() {
         language VARCHAR(20) NOT NULL,
         quantity INT NOT NULL,
         price NUMERIC(10, 2) NOT NULL
+      );
+    `);
+
+    // Tabella product
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS product (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        description TEXT,
+        price DECIMAL(10,2) NOT NULL,
+        coverImage VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -470,6 +484,100 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
+// API per ottenere tutti i prodotti
+app.get('/api/products', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM product'); // <-- usa la tabella product
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Errore nel recupero prodotti:', err);
+    res.status(500).json({ error: 'Errore nel server' });
+  }
+});
+
+// API per ottenere un prodotto per ID
+app.get('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM product WHERE id = $1', [id]);
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Prodotto non trovato' });
+      return;
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Errore nel recupero prodotto:', err);
+    res.status(500).json({ error: 'Errore nel server' });
+  }
+});
+
+// API per aggiungere un nuovo prodotto
+app.post('/api/products', async (req, res) => {
+  try {
+    const { name, description, price, coverImage } = req.body;
+    const result = await pool.query(
+      'INSERT INTO product (name, description, price, coverImage) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, description, price, coverImage]
+    );
+
+    res.status(201).json({ message: 'Prodotto aggiunto con successo!', product: result.rows[0] });
+  } catch (err) {
+    console.error('Errore nell\'aggiunta del prodotto:', err);
+    res.status(500).json({ error: 'Errore nel salvataggio del prodotto' });
+  }
+});
+
+// API per aggiornare un prodotto
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, price, coverImage } = req.body;
+    const result = await pool.query(
+      'UPDATE product SET name = $1, description = $2, price = $3, coverImage = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *',
+      [name, description, price, coverImage, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Prodotto non trovato' });
+    }
+
+    res.json({ message: 'Prodotto aggiornato con successo!', product: result.rows[0] });
+  } catch (err) {
+    console.error('Errore nell\'aggiornamento del prodotto:', err);
+    res.status(500).json({ error: 'Errore nell\'aggiornamento del prodotto' });
+  }
+});
+
+// API per eliminare un prodotto
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM product WHERE id = $1', [id]);
+    res.json({ message: 'Prodotto eliminato con successo' });
+  } catch (err) {
+    console.error('Errore nell\'eliminazione del prodotto:', err);
+    res.status(500).json({ error: 'Errore nell\'eliminazione del prodotto' });
+  }
+});
+
+// API per ottenere gli articoli di un ordine
+app.get('/api/orders/:orderId/items', async (req, res) => {
+  const { orderId } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT oi.*, p.name, p.price, p.cover_image
+       FROM order_items oi
+       JOIN product p ON oi.product_id = p.id
+       WHERE oi.order_id = $1`,
+      [orderId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Errore nel recupero degli articoli dell\'ordine' });
+  }
+});
 
 // Avvia il server
 app.listen(port, () => {

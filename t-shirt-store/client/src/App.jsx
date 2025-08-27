@@ -10,7 +10,6 @@ import Home from './pages/Home';
 import OrderConfirmation from './pages/OrderConfirmation';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import { products } from './data/products';
 import './App.css';
 import Register from './pages/Register';
 import Login from './pages/Login';
@@ -121,10 +120,10 @@ function App() {
       <main>
         <Routes>
           <Route path="/" element={<Home user={user} />} />
-          <Route path="/products" element={<ProductList products={products} onAddToCart={onAddToCart} />} />
+          <Route path="/products" element={<ProductList onAddToCart={onAddToCart} />} />
           <Route
             path="/product/:productId"
-            element={<ProductDetail products={products} onAddToCart={onAddToCart} />}
+            element={<ProductDetail onAddToCart={onAddToCart} />}
           />
           <Route
             path="/cart"

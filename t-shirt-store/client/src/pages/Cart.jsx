@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom'; // Importa Link
 
 const Cart = ({ cartItems, onRemoveFromCart, onUpdateQuantity }) => {
-  const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = cartItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
 
   return (
     <div className="cart-container max-w-4xl mx-auto p-8 bg-white rounded-lg shadow-lg">
@@ -15,10 +15,18 @@ const Cart = ({ cartItems, onRemoveFromCart, onUpdateQuantity }) => {
           <div className="cart-items mb-8">
             {cartItems.map(item => (
               <div key={`${item.id}-${item.size}-${item.language}`} className="cart-item flex items-center gap-4 border-b border-gray-200 py-4">
-                <img src={item.image} alt={item.name} className="cart-item-image w-24 h-24 object-cover rounded-lg shadow-md" />
+                <img
+                  src={
+                    item.images && item.language && item.images[item.language]
+                      ? item.images[item.language]
+                      : item.cover_image
+                  }
+                  alt={item.name}
+                  className="cart-item-image w-24 h-24 object-cover rounded-lg shadow-md"
+                />
                 <div className="cart-item-info flex-grow">
                   <h3 className="text-xl font-semibold m-0">{item.name}</h3>
-                  <p className="text-gray-700 m-0">€{item.price.toFixed(2)}</p>
+                  <p className="text-gray-700 m-0">€{Number(item.price).toFixed(2)}</p>
                   <p className="text-gray-600 text-sm m-0">Taglia: {item.size}</p>
                   <p className="text-gray-600 text-sm m-0">Lingua: {item.language}</p>
                   <div className="quantity-controls flex items-center mt-2">

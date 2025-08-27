@@ -25,7 +25,7 @@ const Header = ({ cartCount, user, onLogout }) => {
 
       {/* Titolo al centro */}
       <div className="shop-name-container">
-        <Link to="/" className="shop-name">Ancora Non So.com</Link>
+        <Link to="/" className="shop-name">Lost in Translation</Link>
       </div>
 
       {/* Lato destro: carrello + (menu UL che si apre in mobile) */}
