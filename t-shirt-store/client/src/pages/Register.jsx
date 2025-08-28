@@ -1,6 +1,7 @@
 // Register.jsx
 import React, { useState } from "react";
 import axios from "axios";
+import { getNames } from 'country-list';
 
 const Register = () => {
   const [form, setForm] = useState({ 
@@ -17,6 +18,7 @@ const Register = () => {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const countries = getNames(); // Array di tutti i paesi
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -69,7 +71,12 @@ const Register = () => {
         </div>
         <div>
           <label htmlFor="country">Nazione</label>
-          <input name="country" id="country" value={form.country} onChange={handleChange} className="form-input" />
+          <select name="country" value={form.country} onChange={handleChange} className="form-input">
+            <option value="">Seleziona una nazione</option>
+            {countries.map(country => (
+              <option key={country} value={country}>{country}</option>
+            ))}
+          </select>
         </div>
         <div>
           <label htmlFor="phoneNumber">Numero di Telefono</label>

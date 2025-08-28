@@ -402,19 +402,22 @@ main {
   box-shadow: 0 0 0 2px #a5b4fc;
 }
 
-.modern-select {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
+.form-select {
+  font-size: 0.95rem;
+  width: 100%;
+  max-width: 400px;
+  padding: 0.75rem 1rem;
   border: 1.5px solid #2563eb;
+  border-radius: 8px;
   background: #f8fafc;
-  font-size: 1rem;
   color: #222;
   margin-bottom: 0.5rem;
   transition: border-color 0.2s, box-shadow 0.2s;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.07);
+  box-sizing: border-box;
 }
 
-.modern-select:focus {
+.form-select:focus {
   border-color: #4f46e5;
   background: #fff;
   outline: none;
@@ -451,6 +454,25 @@ button[type="submit"] {
 
 button[type="submit"]:hover {
   background: linear-gradient(90deg, #4f46e5 0%, #2563eb 100%);
+}
+
+/* Pulsante di login/registrazione */
+.login-register-btn {
+  background: linear-gradient(90deg, #2563eb 0%, #4f46e5 100%);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.07);
+}
+
+.login-register-btn:hover {
+  background: linear-gradient(90deg, #4f46e5 0%, #2563eb 100%);
+  box-shadow: 0 4px 16px rgba(37,99,235,0.15);
 }
 
 /* Media Queries per il responsive design */
@@ -592,5 +614,53 @@ button[type="submit"]:hover {
     height: 300px;
     max-width: 400px;
     margin: 0 auto;
+  }
+}
+/*
+   Add this new CSS class to your App.css file.
+   It mirrors the styles of the existing form-input and form-select classes.
+*/
+.modern-select {
+  font-size: 0.95rem;
+  width: 100%;
+  max-width: 400px; /* Optional: adjust if you need it wider */
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #2563eb;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #222;
+  margin-bottom: 0.5rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.07);
+  box-sizing: border-box;
+  -webkit-appearance: none; /* Hide default arrow on iOS */
+  -moz-appearance: none;    /* Hide default arrow on Firefox */
+  appearance: none;         /* Hide default arrow */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%232563eb" d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 16px;
+  cursor: pointer;
+}
+
+.modern-select:focus {
+  border-color: #4f46e5;
+  background: #fff;
+  outline: none;
+  box-shadow: 0 0 0 2px #a5b4fc;
+}
+
+/* Add a style for the options within the select menu */
+.modern-select option {
+  color: #222;
+  background-color: #fff;
+}
+
+/* Media query for mobile responsiveness, similar to other form inputs */
+@media (max-width: 768px) {
+  .modern-select {
+    max-width: none;
+    font-size: 16px; /* Prevents zoom on iOS */
+    margin: 0;
   }
 }

@@ -1,7 +1,8 @@
 // Checkout.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { getNames } from 'country-list';
 
 const Checkout = ({ cartItems, onClearCart, user }) => {
   const [formData, setFormData] = useState({
@@ -19,6 +20,8 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
   const [saveInfo, setSaveInfo] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  const countries = getNames(); // Array di tutti i paesi
 
   useEffect(() => {
     if (user) {
@@ -112,9 +115,30 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Checkout</h2>
-      <div className="w-full">
+    <div className="container mx-auto p-4 flex flex-col md:flex-row gap-8">
+      <div className="w-full md:w-2/3">
+        <h2 className="text-2xl font-bold mb-4">Checkout</h2>
+        {/* Frase e pulsanti sopra il form se NON loggato */}
+        {!user && (
+          <div className="checkout-login-bar mb-6 flex flex-col items-center">
+  <span className="text-lg font-semibold mb-3" style={{ color: "#2563eb" }}>
+    Vuoi risparmiare tempo? <br />
+    Fai il login oppure registrati per salvare i tuoi dati!
+  </span>
+  <div className="flex gap-4 mt-2">
+    <Link to="/login">
+      <button type="button" className="login-register-btn">
+        Login
+      </button>
+    </Link>
+    <Link to="/register">
+      <button type="button" className="login-register-btn">
+        Registrati
+      </button>
+    </Link>
+  </div>
+</div>
+        )}
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md mb-6">
           <h3 className="text-xl font-bold mb-4">Dati di Spedizione</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -197,14 +221,17 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
           </div>
           <div>
             <label htmlFor="country" className="block text-gray-700 text-sm font-bold mb-2">Nazione:</label>
-            <input
-              type="text"
-              id="country"
+            <select
               name="country"
               value={formData.country}
               onChange={handleChange}
-              className={`form-input ${errors.country ? 'border-red-500' : ''}`}
-            />
+              className={`form-select ${errors.country ? 'border-red-500' : ''}`}
+            >
+              <option value="">Seleziona una nazione</option>
+              {countries.map(country => (
+                <option key={country} value={country}>{country}</option>
+              ))}
+            </select>
             {errors.country && <p className="text-red-500 text-xs italic">{errors.country}</p>}
           </div>
           <div>
@@ -231,17 +258,20 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
             />
             {errors.phoneNumber && <p className="text-red-500 text-xs italic">{errors.phoneNumber}</p>}
           </div>
-          <div>
-            <label className="flex items-center space-x-2 mt-4">
-              <input
-                type="checkbox"
-                checked={saveInfo}
-                onChange={handleSaveInfoChange}
-                className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-              />
-              <span className="text-gray-900 text-sm">Salva le mie informazioni per il prossimo acquisto</span>
-            </label>
-          </div>
+          {/* Flag "Salva info" solo se loggato */}
+          {user && (
+            <div>
+              <label className="flex items-center space-x-2 mt-4">
+                <input
+                  type="checkbox"
+                  checked={saveInfo}
+                  onChange={handleSaveInfoChange}
+                  className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                />
+                <span className="text-gray-900 text-sm">Salva le mie informazioni per il prossimo acquisto</span>
+              </label>
+            </div>
+          )}
           <button
             type="submit"
             className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline mt-4"

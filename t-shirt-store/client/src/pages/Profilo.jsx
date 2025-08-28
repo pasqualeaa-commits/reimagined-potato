@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { getNames } from 'country-list';
+
+const countries = getNames(); // Array di tutti i paesi
 
 const Profilo = ({ user, onLogout, onUpdateUser }) => {
   const navigate = useNavigate();
@@ -148,14 +151,12 @@ const Profilo = ({ user, onLogout, onUpdateUser }) => {
         </div>
         <div>
           <label htmlFor="country">Nazione</label>
-          <input
-            type="text"
-            id="country"
-            name="country"
-            value={form.country}
-            onChange={handleChange}
-            className="form-input"
-          />
+          <select name="country" value={form.country} onChange={handleChange} className="form-input">
+            <option value="">Seleziona una nazione</option>
+            {countries.map(country => (
+              <option key={country} value={country}>{country}</option>
+            ))}
+          </select>
         </div>
         <div>
           <label htmlFor="phoneNumber">Numero di Telefono</label>
