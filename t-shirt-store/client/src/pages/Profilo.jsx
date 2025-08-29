@@ -3,11 +3,12 @@ import { Navigate, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { getNames } from 'country-list';
 
-const countries = getNames().sort((a, b) => {
-    if (a === 'Italy') return -1;
-    if (b === 'Italy') return 1;
-    return a.localeCompare(b);
-  });
+const allCountries = getNames().sort((a, b) => a.localeCompare(b));
+  const italyIndex = allCountries.findIndex(country => country === 'Italy');
+  if (italyIndex > -1) {
+    allCountries.splice(italyIndex, 1);
+  }
+  const countries = ['Italy', '--------------------', ...allCountries];
 
 const Profilo = ({ user, onLogout, onUpdateUser }) => {
   const navigate = useNavigate();
@@ -156,11 +157,18 @@ const Profilo = ({ user, onLogout, onUpdateUser }) => {
         <div>
           <label htmlFor="country">Nazione</label>
           <select name="country" value={form.country} onChange={handleChange} className="form-input">
-            <option value="">Seleziona una nazione</option>
-            {countries.map(country => (
-              <option key={country} value={country}>{country}</option>
-            ))}
-          </select>
+             <option value="">Seleziona una nazione</option>
+          {countries.map(country => {
+            if (country === '--------------------') {
+              return <option key="separator" value="" disabled>─</option>;
+            }
+            return (
+              <option key={country} value={country}>
+                {country}
+              </option>
+            );
+          })}
+        </select>
         </div>
         <div>
           <label htmlFor="phoneNumber">Numero di Telefono</label>

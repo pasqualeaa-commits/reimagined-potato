@@ -21,11 +21,12 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const countries = getNames().sort((a, b) => {
-      if (a === 'Italy') return -1;
-      if (b === 'Italy') return 1;
-      return a.localeCompare(b);
-    });
+   const allCountries = getNames().sort((a, b) => a.localeCompare(b));
+  const italyIndex = allCountries.findIndex(country => country === 'Italy');
+  if (italyIndex > -1) {
+    allCountries.splice(italyIndex, 1);
+  }
+  const countries = ['Italy', '--------------------', ...allCountries];
 
   useEffect(() => {
     if (user) {
@@ -231,11 +232,18 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
               onChange={handleChange}
               className={`form-select ${errors.country ? 'border-red-500' : ''}`}
             >
-              <option value="">Seleziona una nazione</option>
-              {countries.map(country => (
-                <option key={country} value={country}>{country}</option>
-              ))}
-            </select>
+               <option value="">Seleziona una nazione</option>
+          {countries.map(country => {
+            if (country === '--------------------') {
+              return <option key="separator" value="" disabled>─</option>;
+            }
+            return (
+              <option key={country} value={country}>
+                {country}
+              </option>
+            );
+          })}
+        </select>
             {errors.country && <p className="text-red-500 text-xs italic">{errors.country}</p>}
           </div>
           <div>

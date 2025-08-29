@@ -6,9 +6,10 @@ const About = ({ user }) => (
     <h2 className="text-4xl font-bold mb-4">
       {user
         ? `Benvenuto nel Nostro Negozio, ${user.firstName}!`
-        : 'Cosa vuoi sapere su di noi? \n Che non lo so nemmeno io....'}
+        : 'Cosa vuoi sapere su di noi?'}
     </h2>
-    <p className="text-lg mb-8">Scopri la nostra fantastica selezione di prodotti.</p>
+    <h3 className="text-2xl font-bold mb-2">Che non lo so nemmeno io....</h3>
+    <p className="text-lg mb-8">Sito creato da Pasquale Aldo, per gli invidiosi che non ci credono</p>
     <Link to="/products" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">
       Guarda i Prodotti
     </Link>
