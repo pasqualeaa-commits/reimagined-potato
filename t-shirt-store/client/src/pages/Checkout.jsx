@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { getNames } from 'country-list';
+import FeedbackPopup from "../components/FeedbackPopup"; // Importa il componente popup
 
 const Checkout = ({ cartItems, onClearCart, user }) => {
   const [formData, setFormData] = useState({
@@ -19,9 +20,12 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
   const [errors, setErrors] = useState({});
   const [saveInfo, setSaveInfo] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [popupType, setPopupType] = useState("");
   const navigate = useNavigate();
 
-   const allCountries = getNames().sort((a, b) => a.localeCompare(b));
+  const allCountries = getNames().sort((a, b) => a.localeCompare(b));
   const italyIndex = allCountries.findIndex(country => country === 'Italy');
   if (italyIndex > -1) {
     allCountries.splice(italyIndex, 1);
@@ -81,10 +85,14 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm() || isLoading) {
+      setPopupMessage("Si prega di compilare tutti i campi obbligatori.");
+      setPopupType("error");
+      setIsPopupVisible(true);
       return;
     }
 
     setIsLoading(true);
+    setIsPopupVisible(false);
 
     try {
       const orderData = {
@@ -106,10 +114,15 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
       await axios.post('https://reimagined-potato-1.onrender.com/api/orders', orderData);
       
       onClearCart();
-      navigate('/conferma-ordine');
+      setPopupMessage("Ordine effettuato con successo! Verrai reindirizzato a breve.");
+      setPopupType("success");
+      setIsPopupVisible(true);
+      setTimeout(() => navigate('/conferma-ordine'), 3000);
     } catch (err) {
       console.error("Errore durante il checkout:", err);
-      setErrors({ server: 'Errore durante l\'elaborazione del tuo ordine. Riprova più tardi.' });
+      setPopupMessage('Errore durante l\'elaborazione del tuo ordine. Riprova più tardi.');
+      setPopupType("error");
+      setIsPopupVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -119,146 +132,86 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
     setSaveInfo(e.target.checked);
   };
 
+  const handleClosePopup = () => {
+    setIsPopupVisible(false);
+  };
+
   return (
     <div className="container mx-auto p-4 flex flex-col md:flex-row gap-8">
-      <div className="w-full md:w-2/3">
+      <div className="w-full">
         <h2 className="text-2xl font-bold mb-4">Checkout</h2>
-        {/* Frase e pulsanti sopra il form se NON loggato */}
         {!user && (
           <div className="checkout-login-bar mb-6 flex flex-col items-center">
-  <span className="text-lg font-semibold mb-3" style={{ color: "#2563eb" }}>
-    Vuoi risparmiare tempo? <br />
-    Fai il login oppure registrati per salvare i tuoi dati!
-  </span>
-  <div className="flex gap-4 mt-2">
-    <Link to="/login" state={{ from: { pathname: location.pathname } }}>
-      <button type="button" className="login-register-btn">
-        Login
-      </button>
-    </Link>
-    <Link to="/register" state={{ from: { pathname: location.pathname } }}>
-      <button type="button" className="login-register-btn">
-        Registrati
-      </button>
-    </Link>
-  </div>
-</div>
+            <span className="text-lg font-semibold mb-3" style={{ color: "#2563eb" }}>
+              Vuoi risparmiare tempo? <br /> Fai il login oppure registrati per salvare i tuoi dati!
+            </span>
+            <div className="flex gap-4 mt-2">
+              <Link to="/login" state={{ from: { pathname: location.pathname } }}>
+                <button type="button" className="login-register-btn"> Login </button>
+              </Link>
+              <Link to="/register" state={{ from: { pathname: location.pathname } }}>
+                <button type="button" className="login-register-btn"> Registrati </button>
+              </Link>
+            </div>
+          </div>
         )}
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md mb-6">
           <h3 className="text-xl font-bold mb-4">Dati di Spedizione</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label htmlFor="firstName" className="block text-gray-700 text-sm font-bold mb-2">Nome:</label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                className={`form-input ${errors.firstName ? 'border-red-500' : ''}`}
-              />
+              <input type="text" id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} className={`form-input ${errors.firstName ? 'border-red-500' : ''}`} />
               {errors.firstName && <p className="text-red-500 text-xs italic">{errors.firstName}</p>}
             </div>
             <div>
               <label htmlFor="lastName" className="block text-gray-700 text-sm font-bold mb-2">Cognome:</label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                className={`form-input ${errors.lastName ? 'border-red-500' : ''}`}
-              />
+              <input type="text" id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} className={`form-input ${errors.lastName ? 'border-red-500' : ''}`} />
               {errors.lastName && <p className="text-red-500 text-xs italic">{errors.lastName}</p>}
             </div>
-          </div>
-          <div>
-            <label htmlFor="address" className="block text-gray-700 text-sm font-bold mb-2">Indirizzo:</label>
-            <input
-              type="text"
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              className={`form-input ${errors.address ? 'border-red-500' : ''}`}
-            />
-            {errors.address && <p className="text-red-500 text-xs italic">{errors.address}</p>}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label htmlFor="address" className="block text-gray-700 text-sm font-bold mb-2">Indirizzo:</label>
+              <input type="text" id="address" name="address" value={formData.address} onChange={handleChange} className={`form-input ${errors.address ? 'border-red-500' : ''}`} />
+              {errors.address && <p className="text-red-500 text-xs italic">{errors.address}</p>}
+            </div>
             <div>
               <label htmlFor="city" className="block text-gray-700 text-sm font-bold mb-2">Città:</label>
-              <input
-                type="text"
-                id="city"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                className={`form-input ${errors.city ? 'border-red-500' : ''}`}
-              />
+              <input type="text" id="city" name="city" value={formData.city} onChange={handleChange} className={`form-input ${errors.city ? 'border-red-500' : ''}`} />
               {errors.city && <p className="text-red-500 text-xs italic">{errors.city}</p>}
             </div>
             <div>
               <label htmlFor="province" className="block text-gray-700 text-sm font-bold mb-2">Provincia:</label>
-              <input
-                type="text"
-                id="province"
-                name="province"
-                maxLength="2"
-                value={formData.province}
-                onChange={handleChange}
-                className={`form-input ${errors.province ? 'border-red-500' : ''}`}
-              />
+              <input type="text" id="province" name="province" value={formData.province} onChange={handleChange} maxLength="2" className={`form-input ${errors.province ? 'border-red-500' : ''}`} />
               {errors.province && <p className="text-red-500 text-xs italic">{errors.province}</p>}
             </div>
             <div>
               <label htmlFor="zipCode" className="block text-gray-700 text-sm font-bold mb-2">CAP:</label>
-              <input
-                type="text"
-                id="zipCode"
-                name="zipCode"
-                maxLength="5"
-                value={formData.zipCode}
-                onChange={handleChange}
-                className={`form-input ${errors.zipCode ? 'border-red-500' : ''}`}
-              />
+              <input type="text" id="zipCode" name="zipCode" value={formData.zipCode} onChange={handleChange} maxLength="5" className={`form-input ${errors.zipCode ? 'border-red-500' : ''}`} />
               {errors.zipCode && <p className="text-red-500 text-xs italic">{errors.zipCode}</p>}
             </div>
+            <div>
+              <label htmlFor="country" className="block text-gray-700 text-sm font-bold mb-2">Nazione:</label>
+              <select id="country" name="country" value={formData.country} onChange={handleChange} className={`form-input ${errors.country ? 'border-red-500' : ''}`}>
+                <option value="">Seleziona una nazione</option>
+                {countries.map(country => {
+                  if (country === '--------------------') {
+                    return <option key="separator" value="" disabled>─</option>;
+                  }
+                  return (
+                    <option key={country} value={country}>
+                      {country}
+                    </option>
+                  );
+                })}
+              </select>
+              {errors.country && <p className="text-red-500 text-xs italic">{errors.country}</p>}
+            </div>
+            <div>
+              <label htmlFor="phoneNumber" className="block text-gray-700 text-sm font-bold mb-2">Numero di Telefono:</label>
+              <input type="tel" id="phoneNumber" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} className={`form-input ${errors.phoneNumber ? 'border-red-500' : ''}`} />
+              {errors.phoneNumber && <p className="text-red-500 text-xs italic">{errors.phoneNumber}</p>}
+            </div>
           </div>
-          <div>
-            <label htmlFor="country" className="block text-gray-700 text-sm font-bold mb-2">Nazione:</label>
-            <select
-              name="country"
-              value={formData.country}
-              onChange={handleChange}
-              className={`form-select ${errors.country ? 'border-red-500' : ''}`}
-            >
-               <option value="">Seleziona una nazione</option>
-          {countries.map(country => {
-            if (country === '--------------------') {
-              return <option key="separator" value="" disabled>─</option>;
-            }
-            return (
-              <option key={country} value={country}>
-                {country}
-              </option>
-            );
-          })}
-        </select>
-            {errors.country && <p className="text-red-500 text-xs italic">{errors.country}</p>}
-          </div>
-          <div>
-            <label htmlFor="phoneNumber" className="block text-gray-700 text-sm font-bold mb-2">Numero di Telefono:</label>
-            <input
-              type="text"
-              id="phoneNumber"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              className={`form-input ${errors.phoneNumber ? 'border-red-500' : ''}`}
-            />
-            {errors.phoneNumber && <p className="text-red-500 text-xs italic">{errors.phoneNumber}</p>}
-          </div>
-          <div>
+          <div className="mb-4">
             <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">Email:</label>
             <input
               type="email"
@@ -270,7 +223,6 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
             />
             {errors.email && <p className="text-red-500 text-xs italic">{errors.email}</p>}
           </div>
-          {/* Flag "Salva info" solo se loggato */}
           {user && (
             <div>
               <label className="flex items-center space-x-2 mt-4">
@@ -291,9 +243,10 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
           >
             {isLoading ? 'Elaborazione...' : 'Paga e Ordina'}
           </button>
-          {errors.server && <p className="text-red-500 text-center mt-2">{errors.server}</p>}
         </form>
       </div>
+
+      {isPopupVisible && <FeedbackPopup message={popupMessage} type={popupType} onClose={handleClosePopup} />}
     </div>
   );
 };

@@ -2,25 +2,34 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import FeedbackPopup from "../components/FeedbackPopup"; // Importa il componente popup
 
 const ReimpostaPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [popupType, setPopupType] = useState("");
+
+  const handleClosePopup = () => {
+    setIsPopupVisible(false);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
-    setError("");
+    setIsPopupVisible(false);
 
     try {
       await axios.post("https://reimagined-potato-1.onrender.com/api/password-reset", { token, newPassword });
-      setMessage("Password reimpostata con successo! Ora puoi accedere.");
+      setPopupMessage("Password reimpostata con successo! Ora puoi accedere.");
+      setPopupType("success");
+      setIsPopupVisible(true);
       setTimeout(() => navigate("/login"), 3000);
     } catch (err) {
-      setError(err.response?.data?.error || "Errore nella reimpostazione della password");
+      setPopupMessage(err.response?.data?.error || "Errore nella reimpostazione della password");
+      setPopupType("error");
+      setIsPopupVisible(true);
     }
   };
 
@@ -44,8 +53,7 @@ const ReimpostaPassword = () => {
           Reimposta
         </button>
       </form>
-      {message && <div className="text-green-600 mt-2">{message}</div>}
-      {error && <div className="text-red-600 mt-2">{error}</div>}
+      {isPopupVisible && <FeedbackPopup message={popupMessage} type={popupType} onClose={handleClosePopup} />}
     </div>
   );
 };

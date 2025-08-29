@@ -3,8 +3,9 @@ import React, { useState } from "react";
 import axios from "axios";
 import { getNames } from 'country-list';
 import { useNavigate, useLocation } from "react-router-dom";
+import FeedbackPopup from "../components/FeedbackPopup"; // Importa il nuovo componente
 
-const Register = () => {
+const Register = ({ onLogin }) => {
   const [form, setForm] = useState({ 
     firstName: "", 
     lastName: "", 
@@ -17,8 +18,9 @@ const Register = () => {
     country: "",
     phoneNumber: ""
   });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [popupType, setPopupType] = useState("");
 
   const allCountries = getNames().sort((a, b) => a.localeCompare(b));
   const italyIndex = allCountries.findIndex(country => country === 'Italy');
@@ -26,26 +28,43 @@ const Register = () => {
     allCountries.splice(italyIndex, 1);
   }
   const countries = ['Italy', '--------------------', ...allCountries];
-
-
   const navigate = useNavigate();
   const location = useLocation();
-
+  const from = location.state?.from?.pathname || "/";
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async e => {
     e.preventDefault();
-    setError(""); setSuccess("");
+    setIsPopupVisible(false);
+
     try {
       await axios.post("https://reimagined-potato-1.onrender.com/api/register", form);
-      setSuccess("Registrazione avvenuta con successo! Ora puoi fare il login.");
+      const res = await axios.post("https://reimagined-potato-1.onrender.com/api/login", {
+        email: form.email,
+        password: form.password
+      });
+      localStorage.setItem("userToken", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      onLogin(res.data.user);
+      
+      setPopupMessage("Registrazione avvenuta con successo! Verrai reindirizzato a breve.");
+      setPopupType("success");
+      setIsPopupVisible(true);
+
       setTimeout(() => {
-        navigate('/login', { state: { from: location.state?.from || { pathname: from } } });
+        navigate(from, { replace: true });
       }, 3000);
+
     } catch (err) {
-      setError(err.response?.data?.error || "Errore nella registrazione");
+      setPopupMessage(err.response?.data?.error || "Errore nella registrazione");
+      setPopupType("error");
+      setIsPopupVisible(true);
     }
+  };
+
+  const handleClosePopup = () => {
+    setIsPopupVisible(false);
   };
 
   return (
@@ -106,8 +125,7 @@ const Register = () => {
         </div>
         <button type="submit" className="bg-black text-white px-4 py-2 rounded">Registrati</button>
       </form>
-      {error && <div className="text-red-600 mt-2">{error}</div>}
-      {success && <div className="text-green-600 mt-2">{success}</div>}
+      {isPopupVisible && <FeedbackPopup message={popupMessage} type={popupType} onClose={handleClosePopup} />}
     </div>
   );
 };

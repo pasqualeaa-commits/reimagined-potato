@@ -1,22 +1,31 @@
 // src/pages/RecuperoPassword.jsx
 import React, { useState } from "react";
 import axios from "axios";
+import FeedbackPopup from "../components/FeedbackPopup"; // Importa il componente popup
 
 const RecuperoPassword = () => {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [popupType, setPopupType] = useState("");
+
+  const handleClosePopup = () => {
+    setIsPopupVisible(false);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
-    setError("");
+    setIsPopupVisible(false);
 
     try {
       await axios.post("https://reimagined-potato-1.onrender.com/api/forgot-password", { email });
-      setMessage("Se l'email è registrata, riceverai un link per reimpostare la password.");
+      setPopupMessage("Se l'email è registrata, riceverai un link per reimpostare la password.");
+      setPopupType("success");
+      setIsPopupVisible(true);
     } catch (err) {
-      setError(err.response?.data?.error || "Errore durante la richiesta");
+      setPopupMessage(err.response?.data?.error || "Errore durante la richiesta");
+      setPopupType("error");
+      setIsPopupVisible(true);
     }
   };
 
@@ -38,11 +47,10 @@ const RecuperoPassword = () => {
           />
         </div>
         <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
-          Invia
+          Invia link
         </button>
       </form>
-      {message && <div className="text-green-600 mt-2">{message}</div>}
-      {error && <div className="text-red-600 mt-2">{error}</div>}
+      {isPopupVisible && <FeedbackPopup message={popupMessage} type={popupType} onClose={handleClosePopup} />}
     </div>
   );
 };

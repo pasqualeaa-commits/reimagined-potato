@@ -155,7 +155,7 @@ function App() {
           />
           <Route path="/conferma-ordine" element={<OrderConfirmation />} />
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/register" element={<Register onLogin={handleLogin} />} />
           <Route path="/profilo" element={<Profilo user={user} onLogout={handleLogout} onUpdateUser={setUser} />} />
           <Route path="/recupero-password" element={<RecuperoPassword />} />
           <Route path="/reset-password/:token" element={<ReimpostaPassword />} />

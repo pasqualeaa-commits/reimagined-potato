@@ -1,21 +1,29 @@
 // Login.jsx
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, useLocation, Link } from "react-router-dom"; // Importa useLocation
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import FeedbackPopup from "../components/FeedbackPopup"; // Importa il componente popup
 
 const Login = ({ onLogin }) => {
   const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [popupType, setPopupType] = useState("");
   const navigate = useNavigate();
-  const location = useLocation(); // Hook per leggere lo stato di navigazione
+  const location = useLocation();
 
-  const from = location.state?.from?.pathname || "/"; // Recupera il percorso precedente o "/" come fallback
+  const from = location.state?.from?.pathname || "/";
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
+  const handleClosePopup = () => {
+    setIsPopupVisible(false);
+  };
+
   const handleSubmit = async e => {
     e.preventDefault();
-    setError("");
+    setIsPopupVisible(false);
+    
     try {
       const res = await axios.post("https://reimagined-potato-1.onrender.com/api/login", form);
       
@@ -24,10 +32,18 @@ const Login = ({ onLogin }) => {
 
       onLogin(res.data.user);
 
-      // Reindirizza al percorso precedente
-      navigate(from, { replace: true });
+      setPopupMessage("Login avvenuto con successo! Verrai reindirizzato a breve.");
+      setPopupType("success");
+      setIsPopupVisible(true);
+
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 3000);
+
     } catch (err) {
-      setError(err.response?.data?.error || "Errore nel login");
+      setPopupMessage(err.response?.data?.error || "Credenziali non valide. Riprova.");
+      setPopupType("error");
+      setIsPopupVisible(true);
     }
   };
 
@@ -41,13 +57,12 @@ const Login = ({ onLogin }) => {
           Accedi
         </button>
       </form>
-      {error && <div className="text-red-600 mt-2">{error}</div>}
-      
       <div className="mt-4 text-center">
-        <Link to="/recupero-password" className="text-sm text-blue-600 hover:underline">
+        <Link to="/recupero-password" className="text-blue-600 hover:underline">
           Hai dimenticato la password?
         </Link>
       </div>
+      {isPopupVisible && <FeedbackPopup message={popupMessage} type={popupType} onClose={handleClosePopup} />}
     </div>
   );
 };
