@@ -21,7 +21,11 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const countries = getNames(); // Array di tutti i paesi
+  const countries = getNames().sort((a, b) => {
+      if (a === 'Italy') return -1;
+      if (b === 'Italy') return 1;
+      return a.localeCompare(b);
+    });
 
   useEffect(() => {
     if (user) {
@@ -235,18 +239,6 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
             {errors.country && <p className="text-red-500 text-xs italic">{errors.country}</p>}
           </div>
           <div>
-            <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">Email:</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className={`form-input ${errors.email ? 'border-red-500' : ''}`}
-            />
-            {errors.email && <p className="text-red-500 text-xs italic">{errors.email}</p>}
-          </div>
-          <div>
             <label htmlFor="phoneNumber" className="block text-gray-700 text-sm font-bold mb-2">Numero di Telefono:</label>
             <input
               type="text"
@@ -257,6 +249,18 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
               className={`form-input ${errors.phoneNumber ? 'border-red-500' : ''}`}
             />
             {errors.phoneNumber && <p className="text-red-500 text-xs italic">{errors.phoneNumber}</p>}
+          </div>
+          <div>
+            <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`form-input ${errors.email ? 'border-red-500' : ''}`}
+            />
+            {errors.email && <p className="text-red-500 text-xs italic">{errors.email}</p>}
           </div>
           {/* Flag "Salva info" solo se loggato */}
           {user && (

@@ -18,7 +18,11 @@ const Register = () => {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const countries = getNames(); // Array di tutti i paesi
+  const countries = getNames().sort((a, b) => {
+    if (a === 'Italy') return -1;
+    if (b === 'Italy') return 1;
+    return a.localeCompare(b);
+  });
   const navigate = useNavigate();
   const location = useLocation();
 

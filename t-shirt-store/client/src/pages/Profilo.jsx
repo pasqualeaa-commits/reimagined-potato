@@ -3,7 +3,11 @@ import { Navigate, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { getNames } from 'country-list';
 
-const countries = getNames(); // Array di tutti i paesi
+const countries = getNames().sort((a, b) => {
+    if (a === 'Italy') return -1;
+    if (b === 'Italy') return 1;
+    return a.localeCompare(b);
+  });
 
 const Profilo = ({ user, onLogout, onUpdateUser }) => {
   const navigate = useNavigate();
