@@ -253,6 +253,7 @@ main {
 .quantity-controls {
   display: flex;
   align-items: center;
+  justify-content: center;
   margin-top: 0.5rem;
 }
 
@@ -264,6 +265,9 @@ main {
   border: 1px solid #ccc;
   border-radius: 4px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .quantity-controls span {

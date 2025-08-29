@@ -20,7 +20,11 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 
 function App() {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState(() => {
+    const savedCart = localStorage.getItem('cartItems');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -48,6 +52,10 @@ function App() {
 
     checkLoginStatus();
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+  }, [cartItems]);
 
   const onAddToCart = (product, options) => {
     const imageForCart = product.images[options.language] || product.coverImage;
