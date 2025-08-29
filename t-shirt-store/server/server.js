@@ -310,7 +310,7 @@ app.post('/api/forgot-password', async (req, res) => {
       [token, expires, user.id]
     );
 
-    const resetUrl = `http://192.168.31.208:5173/reset-password/${token}`;
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -581,5 +581,5 @@ app.get('/api/orders/:orderId/items', async (req, res) => {
 
 // Avvia il server
 app.listen(port, () => {
-  console.log(`Server backend in ascolto su http://192.168.31.208:${port}`);
+  console.log(`Server backend in ascolto su ${process.env.URL}:${port}`);
 });
