@@ -310,7 +310,7 @@ app.post('/api/forgot-password', async (req, res) => {
       [token, expires, user.id]
     );
 
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+    const resetUrl = `https://lost-in-translation-mq6t.onrender.com/reset-password/${token}`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,

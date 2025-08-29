@@ -98,7 +98,7 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
         saveInfo: saveInfo
       };
 
-      await axios.post('http://192.168.31.208:3001/api/orders', orderData);
+      await axios.post('https://reimagined-potato-1.onrender.com/api/orders', orderData);
       
       onClearCart();
       navigate('/conferma-ordine');

@@ -16,7 +16,7 @@ const ReimpostaPassword = () => {
     setError("");
 
     try {
-      await axios.post("http://192.168.31.208:3001/api/password-reset", { token, newPassword });
+      await axios.post("https://reimagined-potato-1.onrender.com/api/password-reset", { token, newPassword });
       setMessage("Password reimpostata con successo! Ora puoi accedere.");
       setTimeout(() => navigate("/login"), 3000);
     } catch (err) {

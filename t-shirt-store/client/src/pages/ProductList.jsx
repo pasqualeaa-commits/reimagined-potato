@@ -6,7 +6,7 @@ const ProductList = ({ onAddToCart }) => {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    axios.get("http://192.168.31.208:3001/api/products")
+    axios.get("https://reimagined-potato-1.onrender.com/api/products")
       .then(res => setProducts(res.data))
       .catch(err => console.error("Errore caricamento prodotti:", err));
   }, []);

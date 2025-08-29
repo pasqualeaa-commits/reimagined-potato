@@ -30,7 +30,7 @@ function App() {
       const token = localStorage.getItem('userToken');
       if (token) {
         try {
-          const res = await axios.get('http://192.168.31.208:3001/api/me', {
+          const res = await axios.get('https://reimagined-potato-1.onrender.com/api/me', {
             headers: {
               'Authorization': `Bearer ${token}`
             }

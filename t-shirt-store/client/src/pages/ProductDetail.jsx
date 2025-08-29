@@ -9,7 +9,7 @@ const ProductDetail = ({ onAddToCart }) => {
   const [selectedSize, setSelectedSize] = useState("");
 
   useEffect(() => {
-    axios.get(`http://192.168.31.208:3001/api/products/${productId}`)
+    axios.get(`https://reimagined-potato-1.onrender.com/api/products/${productId}`)
       .then(res => {
         setProduct(res.data);
         const langs = typeof res.data.languages === "string"

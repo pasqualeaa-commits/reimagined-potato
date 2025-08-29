@@ -44,7 +44,7 @@ const Profilo = ({ user, onLogout, onUpdateUser }) => {
     setSuccess("");
     try {
       const res = await axios.put(
-        `http://192.168.31.208:3001/api/user/${user.id}`,
+        `https://reimagined-potato-1.onrender.com/api/user/${user.id}`,
         form
       );
 

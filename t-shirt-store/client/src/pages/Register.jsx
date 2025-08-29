@@ -26,7 +26,7 @@ const Register = () => {
     e.preventDefault();
     setError(""); setSuccess("");
     try {
-      await axios.post("http://192.168.31.208:3001/api/register", form);
+      await axios.post("https://reimagined-potato-1.onrender.com/api/register", form);
       setSuccess("Registrazione avvenuta con successo! Ora puoi fare il login.");
     } catch (err) {
       setError(err.response?.data?.error || "Errore nella registrazione");

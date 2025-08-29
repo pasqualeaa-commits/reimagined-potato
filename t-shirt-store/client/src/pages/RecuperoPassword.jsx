@@ -13,7 +13,7 @@ const RecuperoPassword = () => {
     setError("");
 
     try {
-      await axios.post("http://192.168.31.208:3001/api/forgot-password", { email });
+      await axios.post("https://reimagined-potato-1.onrender.com/api/forgot-password", { email });
       setMessage("Se l'email è registrata, riceverai un link per reimpostare la password.");
     } catch (err) {
       setError(err.response?.data?.error || "Errore durante la richiesta");
