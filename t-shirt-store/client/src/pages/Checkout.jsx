@@ -1,7 +1,7 @@
 // Checkout.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { getNames } from 'country-list';
 import FeedbackPopup from "../components/FeedbackPopup";
 
@@ -24,6 +24,7 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
   const [popupMessage, setPopupMessage] = useState("");
   const [popupType, setPopupType] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
 
   const allCountries = getNames().sort((a, b) => a.localeCompare(b));
   const italyIndex = allCountries.findIndex(country => country === 'Italy');
@@ -79,6 +80,8 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) {
@@ -92,15 +95,19 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
     setIsPopupVisible(false);
 
     const orderData = {
-      ...formData,
-      cartItems: cartItems.map(item => ({
-        productId: item.id,
+      customerData: formData,
+      items: cartItems.map(item => ({
+        id: item.id,
         name: item.name,
+        image: item.coverImage,
         size: item.selectedSize,
         language: item.selectedLanguage,
         quantity: item.quantity,
         price: item.price
       })),
+      totalAmount: parseFloat(subtotal),
+      userId: user ? user.id : null,
+      saveInfo: saveInfo
     };
 
     try {
@@ -140,170 +147,180 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
     );
   }
 
-  const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
-
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-8 max-w-2xl mx-auto checkout-container">
       <h2 className="text-2xl font-bold mb-6 text-center">Checkout</h2>
-      <div className="flex flex-col md:flex-row gap-8">
-        <div className="md:w-2/3">
-          <h3 className="text-xl font-semibold mb-4">Dati di Spedizione</h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-bold mb-2">Nome:</label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                className={`form-input ${errors.firstName ? 'border-red-500' : ''}`}
-              />
-              {errors.firstName && <p className="text-red-500 text-xs italic">{errors.firstName}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-bold mb-2">Cognome:</label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                className={`form-input ${errors.lastName ? 'border-red-500' : ''}`}
-              />
-              {errors.lastName && <p className="text-red-500 text-xs italic">{errors.lastName}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="address" className="block text-sm font-bold mb-2">Indirizzo:</label>
-              <input
-                type="text"
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="city" className="block text-sm font-bold mb-2">Città:</label>
-              <input
-                type="text"
-                id="city"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="province" className="block text-sm font-bold mb-2">Provincia:</label>
-              <input
-                type="text"
-                id="province"
-                name="province"
-                value={formData.province}
-                onChange={handleChange}
-                maxLength="2"
-                className="form-input"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="zipCode" className="block text-sm font-bold mb-2">CAP:</label>
-              <input
-                type="text"
-                id="zipCode"
-                name="zipCode"
-                value={formData.zipCode}
-                onChange={handleChange}
-                maxLength="5"
-                className="form-input"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="country" className="block text-sm font-bold mb-2">Nazione:</label>
-              <select
-                id="country"
-                name="country"
-                value={formData.country}
-                onChange={handleChange}
-                className="form-input"
-              >
-                <option value="">Seleziona una nazione</option>
-                {countries.map(country => (
-                  <option key={country} value={country}>
-                    {country}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="phoneNumber" className="block text-sm font-bold mb-2">Numero di Telefono:</label>
-              <input
-                type="text"
-                id="phoneNumber"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-bold mb-2">Email:</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`form-input ${errors.email ? 'border-red-500' : ''}`}
-              />
-              {errors.email && <p className="text-red-500 text-xs italic">{errors.email}</p>}
-            </div>
-
-            {user && (
-              <div>
-                <label className="flex items-center space-x-2 mt-4">
-                  <input
-                    type="checkbox"
-                    checked={saveInfo}
-                    onChange={handleSaveInfoChange}
-                    className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                  />
-                  <span className="text-gray-900 text-sm">Salva le mie informazioni per il prossimo acquisto</span>
-                </label>
-              </div>
-            )}
-            
-            <button
-              type="submit"
-              className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline mt-4"
-              disabled={isLoading}
+      
+      {!user && (
+        <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg shadow-inner mb-6 text-center">
+          <p className="text-gray-700 font-semibold mb-3">
+            Vuoi risparmiare tempo e velocizzare il processo di checkout?
+          </p>
+          <div className="flex gap-4">
+            <Link 
+              to="/login" 
+              state={{ from: location.pathname }} // Correzione qui
+              className="login-register-btn flex-1 text-center"
             >
-              {isLoading ? 'Elaborazione...' : 'Paga e Ordina'}
-            </button>
-          </form>
-        </div>
-
-        <div className="md:w-1/3">
-          <div className="bg-gray-100 p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Riepilogo Ordine</h3>
-            <p className="text-gray-700">
-              L'importo totale per i tuoi {cartItems.length} articoli è di **{subtotal} €**.
-            </p>
-            <p className="mt-2 text-sm text-gray-500">
-              Clicca su "Paga e Ordina" per completare l'acquisto.
-            </p>
+              Accedi
+            </Link>
+            <Link 
+              to="/register" 
+              state={{ from: location.pathname }} // Correzione qui
+              className="login-register-btn flex-1 text-center"
+            >
+              Registrati
+            </Link>
           </div>
         </div>
+      )}
+
+      <div className="md:w-full">
+        <h3 className="text-xl font-semibold mb-4">Dati di Spedizione</h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="firstName" className="block text-sm font-bold mb-2">Nome:</label>
+            <input
+              type="text"
+              id="firstName"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              className={`form-input ${errors.firstName ? 'border-red-500' : ''}`}
+            />
+            {errors.firstName && <p className="text-red-500 text-xs italic">{errors.firstName}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="lastName" className="block text-sm font-bold mb-2">Cognome:</label>
+            <input
+              type="text"
+              id="lastName"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              className={`form-input ${errors.lastName ? 'border-red-500' : ''}`}
+            />
+            {errors.lastName && <p className="text-red-500 text-xs italic">{errors.lastName}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="address" className="block text-sm font-bold mb-2">Indirizzo:</label>
+            <input
+              type="text"
+              id="address"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              className="form-input"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="city" className="block text-sm font-bold mb-2">Città:</label>
+            <input
+              type="text"
+              id="city"
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              className="form-input"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="province" className="block text-sm font-bold mb-2">Provincia:</label>
+            <input
+              type="text"
+              id="province"
+              name="province"
+              value={formData.province}
+              onChange={handleChange}
+              maxLength="2"
+              className="form-input"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="zipCode" className="block text-sm font-bold mb-2">CAP:</label>
+            <input
+              type="text"
+              id="zipCode"
+              name="zipCode"
+              value={formData.zipCode}
+              onChange={handleChange}
+              maxLength="5"
+              className="form-input"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="country" className="block text-sm font-bold mb-2">Nazione:</label>
+            <select
+              id="country"
+              name="country"
+              value={formData.country}
+              onChange={handleChange}
+              className="form-input"
+            >
+              <option value="">Seleziona una nazione</option>
+              {countries.map(country => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="phoneNumber" className="block text-sm font-bold mb-2">Numero di Telefono:</label>
+            <input
+              type="text"
+              id="phoneNumber"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              className="form-input"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="email" className="block text-sm font-bold mb-2">Email:</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`form-input ${errors.email ? 'border-red-500' : ''}`}
+            />
+            {errors.email && <p className="text-red-500 text-xs italic">{errors.email}</p>}
+          </div>
+
+          {user && (
+            <div>
+              <label className="flex items-center space-x-2 mt-4">
+                <input
+                  type="checkbox"
+                  checked={saveInfo}
+                  onChange={handleSaveInfoChange}
+                  className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                />
+                <span className="text-gray-900 text-sm">Salva le mie informazioni per il prossimo acquisto</span>
+              </label>
+            </div>
+          )}
+          
+          <button
+            type="submit"
+            className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline mt-4"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Elaborazione...' : `Paga e Ordina ${subtotal} €`}
+          </button>
+        </form>
       </div>
+
       {isPopupVisible && <FeedbackPopup message={popupMessage} type={popupType} onClose={() => setIsPopupVisible(false)} />}
     </div>
   );

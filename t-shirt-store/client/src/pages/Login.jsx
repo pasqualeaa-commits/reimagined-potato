@@ -14,7 +14,8 @@ const Login = ({ onLogin }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || "/";
+  // Correzione qui: legge direttamente lo stato 'from'
+  const from = location.state?.from || "/";
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
