@@ -1,12 +1,15 @@
 // Login.jsx
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom"; // Importa useLocation
 
 const Login = ({ onLogin }) => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const location = useLocation(); // Hook per leggere lo stato di navigazione
+
+  const from = location.state?.from?.pathname || "/"; // Recupera il percorso precedente o "/" come fallback
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -16,14 +19,13 @@ const Login = ({ onLogin }) => {
     try {
       const res = await axios.post("https://reimagined-potato-1.onrender.com/api/login", form);
       
-      // Salva il token e i dati utente in localStorage
       localStorage.setItem('userToken', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
 
-      // Chiama la funzione onLogin per aggiornare lo stato del componente App
       onLogin(res.data.user);
 
-      navigate("/");
+      // Reindirizza al percorso precedente
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || "Errore nel login");
     }

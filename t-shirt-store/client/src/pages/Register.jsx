@@ -19,6 +19,9 @@ const Register = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const countries = getNames(); // Array di tutti i paesi
+  const navigate = useNavigate();
+  const location = useLocation();
+
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -28,6 +31,8 @@ const Register = () => {
     try {
       await axios.post("https://reimagined-potato-1.onrender.com/api/register", form);
       setSuccess("Registrazione avvenuta con successo! Ora puoi fare il login.");
+      // Reindirizza al login e passa lo stato
+      navigate('/login', { state: { from: location.state?.from || { pathname: from } } });
     } catch (err) {
       setError(err.response?.data?.error || "Errore nella registrazione");
     }

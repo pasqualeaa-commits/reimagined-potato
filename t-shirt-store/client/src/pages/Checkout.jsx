@@ -126,12 +126,12 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
     Fai il login oppure registrati per salvare i tuoi dati!
   </span>
   <div className="flex gap-4 mt-2">
-    <Link to="/login">
+    <Link to="/login" state={{ from: { pathname: location.pathname } }}>
       <button type="button" className="login-register-btn">
         Login
       </button>
     </Link>
-    <Link to="/register">
+    <Link to="/register" state={{ from: { pathname: location.pathname } }}>
       <button type="button" className="login-register-btn">
         Registrati
       </button>
