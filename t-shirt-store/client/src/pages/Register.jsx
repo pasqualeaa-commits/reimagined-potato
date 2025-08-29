@@ -40,8 +40,9 @@ const Register = () => {
     try {
       await axios.post("https://reimagined-potato-1.onrender.com/api/register", form);
       setSuccess("Registrazione avvenuta con successo! Ora puoi fare il login.");
-      // Reindirizza al login e passa lo stato
-      navigate('/login', { state: { from: location.state?.from || { pathname: from } } });
+      setTimeout(() => {
+        navigate('/login', { state: { from: location.state?.from || { pathname: from } } });
+      }, 3000);
     } catch (err) {
       setError(err.response?.data?.error || "Errore nella registrazione");
     }
