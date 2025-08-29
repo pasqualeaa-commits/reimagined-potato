@@ -35,7 +35,7 @@ const Profilo = ({ user, onLogout, onUpdateUser }) => {
     let updatedValue = value;
 
     if (name === 'province') {
-      updatedValue = value.toUpperCase().slice(0, 2);
+      updatedValue = value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2);
     } else if (name === 'zipCode') {
       updatedValue = value.replace(/\D/g, '').slice(0, 5);
     }
@@ -131,7 +131,7 @@ const Profilo = ({ user, onLogout, onUpdateUser }) => {
           />
         </div>
         <div>
-          <label htmlFor="province">Provincia</label>
+          <label htmlFor="province">Provincia (Sigla)</label>
           <input
             type="text"
             id="province"

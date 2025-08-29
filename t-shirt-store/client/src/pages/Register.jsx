@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import { getNames } from 'country-list';
 import { useNavigate, useLocation } from "react-router-dom";
-import FeedbackPopup from "../components/FeedbackPopup"; // Importa il nuovo componente
+import FeedbackPopup from "../components/FeedbackPopup";
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Register = ({ onLogin }) => {
   const [form, setForm] = useState({ 
@@ -21,6 +22,7 @@ const Register = ({ onLogin }) => {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
   const [popupType, setPopupType] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const allCountries = getNames().sort((a, b) => a.localeCompare(b));
   const italyIndex = allCountries.findIndex(country => country === 'Italy');
@@ -32,7 +34,26 @@ const Register = ({ onLogin }) => {
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    let updatedValue = value;
+
+    if (name === 'province') {
+      updatedValue = value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2);
+    } else if (name === 'zipCode') {
+      updatedValue = value.replace(/\D/g, '').slice(0, 5);
+    }
+
+    setForm(prevForm => ({ ...prevForm, [name]: updatedValue }));
+  };
+
+  const handleClosePopup = () => {
+    setIsPopupVisible(false);
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -63,14 +84,10 @@ const Register = ({ onLogin }) => {
     }
   };
 
-  const handleClosePopup = () => {
-    setIsPopupVisible(false);
-  };
-
   return (
-    <div className="p-8 max-w-md mx-auto">
-      <h2 className="text-xl font-bold mb-4">Registrazione</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="login-register-container">
+      <h2 className="form-title">Registrazione</h2>
+      <form onSubmit={handleSubmit} className="form-container">
         <div>
           <label htmlFor="firstName">Nome</label>
           <input name="firstName" id="firstName" value={form.firstName} onChange={handleChange} required className="form-input" />
@@ -85,7 +102,23 @@ const Register = ({ onLogin }) => {
         </div>
         <div>
           <label htmlFor="password">Password</label>
-          <input name="password" id="password" type="password" value={form.password} onChange={handleChange} required className="form-input" />
+          <div className="password-container">
+            <input 
+              name="password" 
+              id="password" 
+              type={showPassword ? 'text' : 'password'}
+              value={form.password} 
+              onChange={handleChange} 
+              required 
+              className="form-input password-input" 
+            />
+            <span 
+              className="password-toggle"
+              onClick={togglePasswordVisibility}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </span>
+          </div>
         </div>
         <div>
           <label htmlFor="address">Indirizzo</label>
@@ -97,11 +130,11 @@ const Register = ({ onLogin }) => {
         </div>
         <div>
           <label htmlFor="province">Provincia</label>
-          <input name="province" id="province" value={form.province} onChange={handleChange} className="form-input" />
+          <input name="province" id="province" value={form.province} onChange={handleChange} maxLength="2" className="form-input" />
         </div>
         <div>
           <label htmlFor="zipCode">CAP</label>
-          <input name="zipCode" id="zipCode" value={form.zipCode} onChange={handleChange} className="form-input" />
+          <input name="zipCode" id="zipCode" value={form.zipCode} onChange={handleChange} maxLength="5" className="form-input" />
         </div>
         <div>
           <label htmlFor="country">Nazione</label>
@@ -123,7 +156,7 @@ const Register = ({ onLogin }) => {
           <label htmlFor="phoneNumber">Numero di Telefono</label>
           <input name="phoneNumber" id="phoneNumber" value={form.phoneNumber} onChange={handleChange} className="form-input" />
         </div>
-        <button type="submit" className="bg-black text-white px-4 py-2 rounded">Registrati</button>
+        <button type="submit" className="login-button">Registrati</button>
       </form>
       {isPopupVisible && <FeedbackPopup message={popupMessage} type={popupType} onClose={handleClosePopup} />}
     </div>

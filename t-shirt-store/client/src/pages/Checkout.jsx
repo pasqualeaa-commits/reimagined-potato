@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { getNames } from 'country-list';
-import FeedbackPopup from "../components/FeedbackPopup"; // Importa il componente popup
+import FeedbackPopup from "../components/FeedbackPopup";
 
 const Checkout = ({ cartItems, onClearCart, user }) => {
   const [formData, setFormData] = useState({
@@ -35,16 +35,17 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
   useEffect(() => {
     if (user) {
       setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
+        firstName: user.firstName,
+        lastName: user.lastName,
         address: user.address || '',
         city: user.city || '',
         province: user.province || '',
         zipCode: user.zipCode || '',
         country: user.country || '',
-        email: user.email || '',
+        email: user.email,
         phoneNumber: user.phoneNumber || ''
       });
+      setSaveInfo(true);
     }
   }, [user]);
 
@@ -53,200 +54,257 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
     let updatedValue = value;
 
     if (name === 'province') {
-      updatedValue = value.toUpperCase().slice(0, 2);
+      updatedValue = value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2);
     } else if (name === 'zipCode') {
       updatedValue = value.replace(/\D/g, '').slice(0, 5);
     }
 
-    setFormData(prevFormData => ({ ...prevFormData, [name]: updatedValue }));
-    setErrors(prevErrors => ({ ...prevErrors, [name]: null }));
+    setFormData(prevData => ({ ...prevData, [name]: updatedValue }));
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.firstName) newErrors.firstName = 'Il nome è richiesto.';
-    if (!formData.lastName) newErrors.lastName = 'Il cognome è richiesto.';
-    if (!formData.address) newErrors.address = 'L\'indirizzo è richiesto.';
-    if (!formData.city) newErrors.city = 'La città è richiesta.';
-    if (!formData.province) newErrors.province = 'La provincia è richiesta.';
-    if (!formData.zipCode) newErrors.zipCode = 'Il CAP è richiesto.';
-    if (!formData.country) newErrors.country = 'La nazione è richiesta.';
-    if (!formData.phoneNumber) newErrors.phoneNumber = 'Il numero di telefono è richiesto.';
+  const handleSaveInfoChange = (e) => {
+    setSaveInfo(e.target.checked);
+  };
+
+  const validate = () => {
+    let newErrors = {};
+    if (!formData.firstName) newErrors.firstName = "Il nome è richiesto.";
+    if (!formData.lastName) newErrors.lastName = "Il cognome è richiesto.";
     if (!formData.email) {
-      newErrors.email = 'L\'email è richiesta.';
+      newErrors.email = "L'email è richiesta.";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'L\'email non è valida.';
+      newErrors.email = "L'indirizzo email non è valido.";
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm() || isLoading) {
-      setPopupMessage("Si prega di compilare tutti i campi obbligatori.");
+    if (!validate()) {
+      setPopupMessage("Si prega di correggere gli errori nel modulo.");
       setPopupType("error");
       setIsPopupVisible(true);
       return;
     }
-
+    
     setIsLoading(true);
     setIsPopupVisible(false);
 
-    try {
-      const orderData = {
-        customerData: formData,
-        items: cartItems.map(item => ({
-          id: item.id,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          image: item.image,
-          size: item.size,
-          language: item.language || 'it'
-        })),
-        totalAmount: cartItems.reduce((total, item) => total + item.price * item.quantity, 0),
-        userId: user ? user.id : null,
-        saveInfo: saveInfo
-      };
+    const orderData = {
+      ...formData,
+      cartItems: cartItems.map(item => ({
+        productId: item.id,
+        name: item.name,
+        size: item.selectedSize,
+        language: item.selectedLanguage,
+        quantity: item.quantity,
+        price: item.price
+      })),
+    };
 
-      await axios.post('https://reimagined-potato-1.onrender.com/api/orders', orderData);
+    try {
+      const token = localStorage.getItem('userToken');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      
+      const res = await axios.post("https://reimagined-potato-1.onrender.com/api/orders", orderData, config);
       
       onClearCart();
-      setPopupMessage("Ordine effettuato con successo! Verrai reindirizzato a breve.");
+      setPopupMessage("Ordine confermato con successo! Verrai reindirizzato a breve.");
       setPopupType("success");
       setIsPopupVisible(true);
-      setTimeout(() => navigate('/conferma-ordine'), 3000);
+
+      setTimeout(() => {
+        navigate('/conferma-ordine', { state: { orderId: res.data.orderId } });
+      }, 3000);
+
     } catch (err) {
-      console.error("Errore durante il checkout:", err);
-      setPopupMessage('Errore durante l\'elaborazione del tuo ordine. Riprova più tardi.');
+      console.error('Errore durante la conferma dell\'ordine:', err);
+      setPopupMessage(err.response?.data?.error || "Errore nella conferma dell'ordine. Riprova.");
       setPopupType("error");
       setIsPopupVisible(true);
     } finally {
       setIsLoading(false);
     }
   };
-  
-  const handleSaveInfoChange = (e) => {
-    setSaveInfo(e.target.checked);
-  };
 
-  const handleClosePopup = () => {
-    setIsPopupVisible(false);
-  };
+  if (cartItems.length === 0) {
+    return (
+      <div className="p-8 text-center">
+        <h2 className="text-2xl font-bold mb-4">Il tuo carrello è vuoto!</h2>
+        <p className="mb-4">Per procedere al checkout, aggiungi prima alcuni prodotti al carrello.</p>
+        <Link to="/products" className="text-blue-600 hover:underline">
+          Vai alla pagina dei prodotti
+        </Link>
+      </div>
+    );
+  }
+
+  const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
 
   return (
-    <div className="container mx-auto p-4 flex flex-col md:flex-row gap-8">
-      <div className="w-full">
-        <h2 className="text-2xl font-bold mb-4">Checkout</h2>
-        {!user && (
-          <div className="checkout-login-bar mb-6 flex flex-col items-center">
-            <span className="text-lg font-semibold mb-3" style={{ color: "#2563eb" }}>
-              Vuoi risparmiare tempo? <br /> Fai il login oppure registrati per salvare i tuoi dati!
-            </span>
-            <div className="flex gap-4 mt-2">
-              <Link to="/login" state={{ from: { pathname: location.pathname } }}>
-                <button type="button" className="login-register-btn"> Login </button>
-              </Link>
-              <Link to="/register" state={{ from: { pathname: location.pathname } }}>
-                <button type="button" className="login-register-btn"> Registrati </button>
-              </Link>
-            </div>
-          </div>
-        )}
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md mb-6">
-          <h3 className="text-xl font-bold mb-4">Dati di Spedizione</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div className="p-8 max-w-4xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6 text-center">Checkout</h2>
+      <div className="flex flex-col md:flex-row gap-8">
+        <div className="md:w-2/3">
+          <h3 className="text-xl font-semibold mb-4">Dati di Spedizione</h3>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="firstName" className="block text-gray-700 text-sm font-bold mb-2">Nome:</label>
-              <input type="text" id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} className={`form-input ${errors.firstName ? 'border-red-500' : ''}`} />
+              <label htmlFor="firstName" className="block text-sm font-bold mb-2">Nome:</label>
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                className={`form-input ${errors.firstName ? 'border-red-500' : ''}`}
+              />
               {errors.firstName && <p className="text-red-500 text-xs italic">{errors.firstName}</p>}
             </div>
+
             <div>
-              <label htmlFor="lastName" className="block text-gray-700 text-sm font-bold mb-2">Cognome:</label>
-              <input type="text" id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} className={`form-input ${errors.lastName ? 'border-red-500' : ''}`} />
+              <label htmlFor="lastName" className="block text-sm font-bold mb-2">Cognome:</label>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                className={`form-input ${errors.lastName ? 'border-red-500' : ''}`}
+              />
               {errors.lastName && <p className="text-red-500 text-xs italic">{errors.lastName}</p>}
             </div>
-            <div>
-              <label htmlFor="address" className="block text-gray-700 text-sm font-bold mb-2">Indirizzo:</label>
-              <input type="text" id="address" name="address" value={formData.address} onChange={handleChange} className={`form-input ${errors.address ? 'border-red-500' : ''}`} />
-              {errors.address && <p className="text-red-500 text-xs italic">{errors.address}</p>}
-            </div>
-            <div>
-              <label htmlFor="city" className="block text-gray-700 text-sm font-bold mb-2">Città:</label>
-              <input type="text" id="city" name="city" value={formData.city} onChange={handleChange} className={`form-input ${errors.city ? 'border-red-500' : ''}`} />
-              {errors.city && <p className="text-red-500 text-xs italic">{errors.city}</p>}
-            </div>
-            <div>
-              <label htmlFor="province" className="block text-gray-700 text-sm font-bold mb-2">Provincia:</label>
-              <input type="text" id="province" name="province" value={formData.province} onChange={handleChange} maxLength="2" className={`form-input ${errors.province ? 'border-red-500' : ''}`} />
-              {errors.province && <p className="text-red-500 text-xs italic">{errors.province}</p>}
-            </div>
-            <div>
-              <label htmlFor="zipCode" className="block text-gray-700 text-sm font-bold mb-2">CAP:</label>
-              <input type="text" id="zipCode" name="zipCode" value={formData.zipCode} onChange={handleChange} maxLength="5" className={`form-input ${errors.zipCode ? 'border-red-500' : ''}`} />
-              {errors.zipCode && <p className="text-red-500 text-xs italic">{errors.zipCode}</p>}
-            </div>
-            <div>
-              <label htmlFor="country" className="block text-gray-700 text-sm font-bold mb-2">Nazione:</label>
-              <select id="country" name="country" value={formData.country} onChange={handleChange} className={`form-input ${errors.country ? 'border-red-500' : ''}`}>
-                <option value="">Seleziona una nazione</option>
-                {countries.map(country => {
-                  if (country === '--------------------') {
-                    return <option key="separator" value="" disabled>─</option>;
-                  }
-                  return (
-                    <option key={country} value={country}>
-                      {country}
-                    </option>
-                  );
-                })}
-              </select>
-              {errors.country && <p className="text-red-500 text-xs italic">{errors.country}</p>}
-            </div>
-            <div>
-              <label htmlFor="phoneNumber" className="block text-gray-700 text-sm font-bold mb-2">Numero di Telefono:</label>
-              <input type="tel" id="phoneNumber" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} className={`form-input ${errors.phoneNumber ? 'border-red-500' : ''}`} />
-              {errors.phoneNumber && <p className="text-red-500 text-xs italic">{errors.phoneNumber}</p>}
-            </div>
-          </div>
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">Email:</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className={`form-input ${errors.email ? 'border-red-500' : ''}`}
-            />
-            {errors.email && <p className="text-red-500 text-xs italic">{errors.email}</p>}
-          </div>
-          {user && (
-            <div>
-              <label className="flex items-center space-x-2 mt-4">
-                <input
-                  type="checkbox"
-                  checked={saveInfo}
-                  onChange={handleSaveInfoChange}
-                  className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                />
-                <span className="text-gray-900 text-sm">Salva le mie informazioni per il prossimo acquisto</span>
-              </label>
-            </div>
-          )}
-          <button
-            type="submit"
-            className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline mt-4"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Elaborazione...' : 'Paga e Ordina'}
-          </button>
-        </form>
-      </div>
 
-      {isPopupVisible && <FeedbackPopup message={popupMessage} type={popupType} onClose={handleClosePopup} />}
+            <div>
+              <label htmlFor="address" className="block text-sm font-bold mb-2">Indirizzo:</label>
+              <input
+                type="text"
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                className="form-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="city" className="block text-sm font-bold mb-2">Città:</label>
+              <input
+                type="text"
+                id="city"
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+                className="form-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="province" className="block text-sm font-bold mb-2">Provincia:</label>
+              <input
+                type="text"
+                id="province"
+                name="province"
+                value={formData.province}
+                onChange={handleChange}
+                maxLength="2"
+                className="form-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="zipCode" className="block text-sm font-bold mb-2">CAP:</label>
+              <input
+                type="text"
+                id="zipCode"
+                name="zipCode"
+                value={formData.zipCode}
+                onChange={handleChange}
+                maxLength="5"
+                className="form-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="country" className="block text-sm font-bold mb-2">Nazione:</label>
+              <select
+                id="country"
+                name="country"
+                value={formData.country}
+                onChange={handleChange}
+                className="form-input"
+              >
+                <option value="">Seleziona una nazione</option>
+                {countries.map(country => (
+                  <option key={country} value={country}>
+                    {country}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="phoneNumber" className="block text-sm font-bold mb-2">Numero di Telefono:</label>
+              <input
+                type="text"
+                id="phoneNumber"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                className="form-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-bold mb-2">Email:</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={`form-input ${errors.email ? 'border-red-500' : ''}`}
+              />
+              {errors.email && <p className="text-red-500 text-xs italic">{errors.email}</p>}
+            </div>
+
+            {user && (
+              <div>
+                <label className="flex items-center space-x-2 mt-4">
+                  <input
+                    type="checkbox"
+                    checked={saveInfo}
+                    onChange={handleSaveInfoChange}
+                    className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                  />
+                  <span className="text-gray-900 text-sm">Salva le mie informazioni per il prossimo acquisto</span>
+                </label>
+              </div>
+            )}
+            
+            <button
+              type="submit"
+              className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline mt-4"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Elaborazione...' : 'Paga e Ordina'}
+            </button>
+          </form>
+        </div>
+
+        <div className="md:w-1/3">
+          <div className="bg-gray-100 p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-4">Riepilogo Ordine</h3>
+            <p className="text-gray-700">
+              L'importo totale per i tuoi {cartItems.length} articoli è di **{subtotal} €**.
+            </p>
+            <p className="mt-2 text-sm text-gray-500">
+              Clicca su "Paga e Ordina" per completare l'acquisto.
+            </p>
+          </div>
+        </div>
+      </div>
+      {isPopupVisible && <FeedbackPopup message={popupMessage} type={popupType} onClose={() => setIsPopupVisible(false)} />}
     </div>
   );
 };
