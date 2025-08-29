@@ -9,6 +9,12 @@ const Home = ({ user }) => (
         : 'Benvenuto nel Nostro Negozio!'}
     </h2>
     <p className="text-lg mb-8">Scopri la nostra fantastica selezione di prodotti.</p>
+
+     <video className="w-full max-w-2xl my-8 rounded-lg shadow-lg" controls>
+      <source src="https://res.cloudinary.com/dezd83teo/video/upload/v1756455525/samples/dance-2.mp4" type="video/mp4" />
+      Il tuo browser non supporta il tag video.
+    </video>
+    
     <Link to="/products" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">
       Guarda i Prodotti
     </Link>
