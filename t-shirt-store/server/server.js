@@ -116,6 +116,9 @@ async function createTables() {
         description TEXT,
         price DECIMAL(10,2) NOT NULL,
         coverImage VARCHAR(255),
+        images JSON,
+        sizes TEXT,
+        language TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
