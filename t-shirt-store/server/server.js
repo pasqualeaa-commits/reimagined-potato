@@ -22,9 +22,11 @@ const pool = new Pool({
 
 // Funzione per impostare le tabelle del database all'avvio
 const setupDatabase = async () => {
+  let client; // Dichiarazione della variabile qui
   try {
-    const client = await pool.connect();
-
+    client = await pool.connect(); // Assegnazione della variabile all'interno del try
+    console.log('Database tables verified and created if not exist.');
+    
     // Creazione tabella 'users'
     await client.query(`
       CREATE TABLE IF NOT EXISTS "users" (
@@ -97,7 +99,9 @@ const setupDatabase = async () => {
   } catch (err) {
     console.error('Errore durante la configurazione del database:', err);
   } finally {
-    client.release();
+    if (client) { // Controllo aggiuntivo per sicurezza
+      client.release();
+    }
   }
 };
 
