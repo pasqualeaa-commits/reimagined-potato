@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { getNames } from 'country-list';
+import { getNames } from "country-list";
 
 const allCountries = getNames().sort((a, b) => a.localeCompare(b));
-  const italyIndex = allCountries.findIndex(country => country === 'Italy');
-  if (italyIndex > -1) {
-    allCountries.splice(italyIndex, 1);
-  }
-  const countries = ['Italy', '--------------------', ...allCountries];
+const italyIndex = allCountries.findIndex((country) => country === "Italy");
+if (italyIndex > -1) {
+  allCountries.splice(italyIndex, 1);
+}
+const countries = ["Italy", "--------------------", ...allCountries];
 
 const Profilo = ({ user, onLogout, onUpdateUser }) => {
   const navigate = useNavigate();
@@ -23,7 +23,7 @@ const Profilo = ({ user, onLogout, onUpdateUser }) => {
     zipCode: user.zipCode || "",
     country: user.country || "",
     phoneNumber: user.phoneNumber || "",
-    password: ""
+    password: "",
   });
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -34,10 +34,13 @@ const Profilo = ({ user, onLogout, onUpdateUser }) => {
     const { name, value } = e.target;
     let updatedValue = value;
 
-    if (name === 'province') {
-      updatedValue = value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2);
-    } else if (name === 'zipCode') {
-      updatedValue = value.replace(/\D/g, '').slice(0, 5);
+    if (name === "province") {
+      updatedValue = value
+        .replace(/[^a-zA-Z]/g, "")
+        .toUpperCase()
+        .slice(0, 2);
+    } else if (name === "zipCode") {
+      updatedValue = value.replace(/\D/g, "").slice(0, 5);
     }
 
     setForm({ ...form, [name]: updatedValue });
@@ -49,7 +52,7 @@ const Profilo = ({ user, onLogout, onUpdateUser }) => {
     setSuccess("");
     try {
       const res = await axios.put(
-        `https://reimagined-potato-1.onrender.com/api/user/${user.id}`,
+        `https://reimagined-potato-1.onrender.com/api/users/${user.id}`,
         form
       );
 
@@ -156,19 +159,28 @@ const Profilo = ({ user, onLogout, onUpdateUser }) => {
         </div>
         <div>
           <label htmlFor="country">Nazione</label>
-          <select name="country" value={form.country} onChange={handleChange} className="form-input">
-             <option value="">Seleziona una nazione</option>
-          {countries.map(country => {
-            if (country === '--------------------') {
-              return <option key="separator" value="" disabled>─</option>;
-            }
-            return (
-              <option key={country} value={country}>
-                {country}
-              </option>
-            );
-          })}
-        </select>
+          <select
+            name="country"
+            value={form.country}
+            onChange={handleChange}
+            className="form-input"
+          >
+            <option value="">Seleziona una nazione</option>
+            {countries.map((country) => {
+              if (country === "--------------------") {
+                return (
+                  <option key="separator" value="" disabled>
+                    ─
+                  </option>
+                );
+              }
+              return (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              );
+            })}
+          </select>
         </div>
         <div>
           <label htmlFor="phoneNumber">Numero di Telefono</label>
@@ -203,7 +215,7 @@ const Profilo = ({ user, onLogout, onUpdateUser }) => {
       {error && <div className="text-red-600 mt-2">{error}</div>}
       <button
         onClick={handleLogout}
-        className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
+        className="logout-button" 
       >
         Logout
       </button>

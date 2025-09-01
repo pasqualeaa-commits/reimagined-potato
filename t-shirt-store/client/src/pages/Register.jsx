@@ -129,7 +129,7 @@ const Register = ({ onLogin }) => {
           <input name="city" id="city" value={form.city} onChange={handleChange} className="form-input" />
         </div>
         <div>
-          <label htmlFor="province">Provincia</label>
+          <label htmlFor="province">Provincia (Sigla)</label>
           <input name="province" id="province" value={form.province} onChange={handleChange} maxLength="2" className="form-input" />
         </div>
         <div>
