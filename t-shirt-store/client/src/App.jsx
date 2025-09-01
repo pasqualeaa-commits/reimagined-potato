@@ -18,6 +18,7 @@ import RecuperoPassword from './pages/RecuperoPassword';
 import ReimpostaPassword from './pages/ReimpostaPassword';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import AdminDashboard from './pages/AdminDashboard'; // Importa il nuovo componente
 
 function App() {
   const [cartItems, setCartItems] = useState(() => {
@@ -161,6 +162,7 @@ function App() {
           <Route path="/reset-password/:token" element={<ReimpostaPassword />} />
           <Route path='/about' element={<About />} />
           <Route path='/contact' element={<Contact />} />
+          <Route path="/admin" element={<AdminDashboard user={user} />} />
         </Routes>
       </main>
       <Footer />

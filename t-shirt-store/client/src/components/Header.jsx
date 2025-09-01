@@ -34,6 +34,9 @@ const Header = ({ cartCount, user, onLogout }) => {
               <li><Link to="/products" className="nav-link" onClick={closeMenu}>Prodotti</Link></li>
               <li><Link to="/contact" className="nav-link" onClick={closeMenu}>Contattaci</Link></li>
               <li><Link to="/about" className="nav-link" onClick={closeMenu}>Chi Siamo</Link></li>
+              {user && user.id === 1 && (
+                <li><Link to="/admin" className="nav-link" onClick={closeMenu}>Admin</Link></li>
+              )}
           {!user ? (
             <>
               <li><Link to="/login" className="nav-link" onClick={closeMenu}>Login</Link></li>

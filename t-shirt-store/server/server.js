@@ -390,8 +390,11 @@ app.post('/api/password-reset', async (req, res) => {
   }
 });
 
-// API per l'inserimento di un prodotto
-app.post('/api/products', async (req, res) => {
+// API per l'inserimento di un prodotto (protetta per admin)
+app.post('/api/products', authenticateToken, async (req, res) => {
+  if (req.user.id !== 1) {
+    return res.status(403).json({ error: 'Accesso negato. Solo gli amministratori possono aggiungere prodotti.' });
+  }
   try {
     const { name, description, price, sizes, languages, coverimage, images } = req.body;
     const result = await pool.query(
@@ -431,8 +434,11 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-// API per l'aggiornamento di un prodotto
-app.put('/api/products/:id', async (req, res) => {
+// API per l'aggiornamento di un prodotto (protetta per admin)
+app.put('/api/products/:id', authenticateToken, async (req, res) => {
+  if (req.user.id !== 1) {
+    return res.status(403).json({ error: 'Accesso negato. Solo gli amministratori possono aggiornare prodotti.' });
+  }
   try {
     const { id } = req.params;
     const { name, description, price, sizes, languages, coverimage, images } = req.body;
@@ -452,8 +458,11 @@ app.put('/api/products/:id', async (req, res) => {
   }
 });
 
-// API per eliminare un prodotto
-app.delete('/api/products/:id', async (req, res) => {
+// API per eliminare un prodotto (protetta per admin)
+app.delete('/api/products/:id', authenticateToken, async (req, res) => {
+  if (req.user.id !== 1) {
+    return res.status(403).json({ error: 'Accesso negato. Solo gli amministratori possono eliminare prodotti.' });
+  }
   try {
     const { id } = req.params;
     await pool.query('DELETE FROM product WHERE id = $1', [id]);
@@ -530,6 +539,80 @@ app.get('/api/orders/:orderId/items', async (req, res) => {
   } catch (err) {
     console.error('Errore nel recupero degli articoli dell\'ordine:', err);
     res.status(500).json({ error: 'Errore nel recupero degli articoli dell\'ordine' });
+  }
+});
+
+// Nuova API per ottenere tutti gli ordini (solo per admin)
+app.get('/api/admin/orders', authenticateToken, async (req, res) => {
+  if (req.user.id !== 1) {
+    return res.status(403).json({ error: 'Accesso negato. Solo gli amministratori possono visualizzare gli ordini.' });
+  }
+
+  try {
+    const result = await pool.query(`
+      SELECT 
+        o.id AS order_id, 
+        o.user_id,
+        o.total_amount, 
+        o.status, 
+        o.created_at,
+        o.customer_first_name,
+        o.customer_last_name,
+        o.customer_email,
+        o.customer_address,
+        o.customer_city,
+        o.customer_province,
+        o.customer_zip_code,
+        o.customer_country,
+        o.customer_phone_number,
+        json_agg(
+          json_build_object(
+            'product_id', oi.product_id,
+            'product_name', p.name,
+            'quantity', oi.quantity,
+            'price', oi.price,
+            'size', oi.size,
+            'language', oi.language
+          )
+        ) AS items
+      FROM orders o
+      JOIN order_items oi ON o.id = oi.order_id
+      JOIN product p ON oi.product_id = p.id
+      GROUP BY o.id
+      ORDER BY o.created_at DESC;
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Errore nel recupero degli ordini:', err);
+    res.status(500).json({ error: 'Errore nel recupero degli ordini' });
+  }
+});
+
+// Nuova API per eliminare un ordine (solo per admin)
+app.delete('/api/admin/orders/:id', authenticateToken, async (req, res) => {
+  if (req.user.id !== 1) {
+    return res.status(403).json({ error: 'Accesso negato. Solo gli amministratori possono eliminare gli ordini.' });
+  }
+
+  const { id } = req.params;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('DELETE FROM order_items WHERE order_id = $1', [id]);
+    const orderResult = await client.query('DELETE FROM orders WHERE id = $1 RETURNING *', [id]);
+    await client.query('COMMIT');
+
+    if (orderResult.rowCount === 0) {
+      return res.status(404).json({ error: 'Ordine non trovato.' });
+    }
+
+    res.json({ message: 'Ordine e articoli correlati eliminati con successo.' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Errore durante l\'eliminazione dell\'ordine:', err);
+    res.status(500).json({ error: 'Errore durante l\'eliminazione dell\'ordine' });
+  } finally {
+    client.release();
   }
 });
 
