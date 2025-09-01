@@ -57,7 +57,7 @@ const setupDatabase = async () => {
         sizes TEXT[],
         languages TEXT[],
         coverimage VARCHAR(255),
-        images VARCHAR(255)
+        images JSONB,
       );
     `);
 
@@ -614,6 +614,32 @@ app.delete('/api/admin/orders/:id', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Errore durante l\'eliminazione dell\'ordine' });
   } finally {
     client.release();
+  }
+});
+
+// API per aggiornare lo stato di un ordine (solo per admin)
+app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
+  if (req.user.id !== 1) {
+    return res.status(403).json({ error: 'Accesso negato. Solo gli amministratori possono aggiornare lo stato degli ordini.' });
+  }
+
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const result = await pool.query(
+      'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
+      [status, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Ordine non trovato.' });
+    }
+
+    res.json({ message: 'Stato dell\'ordine aggiornato con successo.', order: result.rows[0] });
+  } catch (err) {
+    console.error('Errore durante l\'aggiornamento dello stato dell\'ordine:', err);
+    res.status(500).json({ error: 'Errore durante l\'aggiornamento dello stato dell\'ordine' });
   }
 });
 

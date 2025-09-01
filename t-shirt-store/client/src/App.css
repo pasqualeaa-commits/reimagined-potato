@@ -913,3 +913,76 @@ button[type="submit"]:hover {
     gap: 0;
   }
 }
+
+/* Stile per i bottoni in generale */
+.admin-dashboard button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+    font-size: 0.9rem;
+}
+
+/* Bottone per mostrare/nascondere i dettagli */
+.admin-dashboard .order-summary button {
+    background-color: #e0e7ff;
+    color: #4338ca;
+    margin-left: 10px;
+}
+
+.admin-dashboard .order-summary button:hover {
+    background-color: #c7d2fe;
+    transform: translateY(-2px);
+}
+
+/* Bottone di eliminazione */
+.admin-dashboard .delete-button {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    margin-left: 10px;
+}
+
+.admin-dashboard .delete-button:hover {
+    background-color: #fecaca;
+    transform: translateY(-2px);
+}
+
+/* Stile per il menu a tendina (select) */
+.admin-dashboard select {
+    padding: 8px 12px;
+    border: 1.5px solid #2563eb;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    color: #222;
+    cursor: pointer;
+    font-size: 0.9rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%232563eb%22%3E%3Cpath%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22%20clip-rule%3D%22evenodd%22%20fill-rule%3D%22evenodd%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 1.2em;
+    margin-top: 10px;
+}
+
+.admin-dashboard select:hover {
+    border-color: #3b82f6;
+}
+
+.admin-dashboard select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+/* Stile per i dettagli dell'ordine aperti */
+.order-details {
+    background-color: #f9fafb;
+    border-left: 3px solid #6366f1;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 8px;
+}

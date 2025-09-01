@@ -14,12 +14,15 @@ const AdminDashboard = ({ user }) => {
     coverimage: '',
     images: {}
   });
+  // Nuovo stato per gestire il menu a tendina
+  const [openOrderId, setOpenOrderId] = useState(null);
   const navigate = useNavigate();
 
   const token = localStorage.getItem('userToken');
-  
+
   const availableSizes = ['S', 'M', 'L', 'XL'];
   const availableLanguages = ['Italiano', 'English', 'Français', 'Español', 'Deutsch'];
+  const orderStatusOptions = ['pending', 'shipped', 'delivered', 'cancelled'];
 
   useEffect(() => {
     if (!user || user.id !== 1) {
@@ -133,6 +136,25 @@ const AdminDashboard = ({ user }) => {
     }
   };
 
+  // Funzione per mostrare/nascondere i dettagli dell'ordine
+  const toggleOrderDetails = (orderId) => {
+    setOpenOrderId(openOrderId === orderId ? null : orderId);
+  };
+
+  // Funzione per aggiornare lo stato dell'ordine
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      await axios.put(`https://reimagined-potato-1.onrender.com/api/admin/orders/${orderId}/status`, { status: newStatus }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Stato dell\'ordine aggiornato con successo!');
+      fetchOrders(); // Ricarica gli ordini per vedere l'aggiornamento
+    } catch (err) {
+      console.error('Errore durante l\'aggiornamento dello stato:', err);
+      alert('Errore durante l\'aggiornamento dello stato dell\'ordine.');
+    }
+  };
+
   if (!user || user.id !== 1) {
     return null;
   }
@@ -147,8 +169,42 @@ const AdminDashboard = ({ user }) => {
         <ul>
           {orders.map(order => (
             <li key={order.order_id}>
-              Ordine #{order.order_id} - Totale: €{order.total_amount} - Status: {order.status}
-              <button className="delete-button" onClick={() => handleDeleteOrder(order.order_id)}>Elimina Ordine</button>
+              <div className="order-summary">
+                <span>Ordine #{order.order_id} - Totale: €{order.total_amount} - Stato: {order.status}</span>
+                <button onClick={() => toggleOrderDetails(order.order_id)}>
+                  {openOrderId === order.order_id ? 'Chiudi Dettagli' : 'Mostra Dettagli'}
+                </button>
+                <button className="delete-button" onClick={() => handleDeleteOrder(order.order_id)}>Elimina Ordine</button>
+              </div>
+
+              {openOrderId === order.order_id && (
+                <div className="order-details">
+                  <h4>Dettagli Cliente</h4>
+                  <p>Nome: {order.customer_first_name} {order.customer_last_name}</p>
+                  <p>Email: {order.customer_email}</p>
+                  <p>Indirizzo: {order.customer_address}, {order.customer_city}, {order.customer_province}, {order.customer_zip_code}, {order.customer_country}</p>
+                  <p>Telefono: {order.customer_phone_number}</p>
+                  
+                  <h4>Prodotti Ordinati</h4>
+                  <ul>
+                    {order.items.map((item, index) => (
+                      <li key={index}>
+                        - {item.product_name} ({item.size}, {item.language}) x {item.quantity} - €{item.price}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <h4>Cambia Stato</h4>
+                  <select
+                    value={order.status}
+                    onChange={(e) => handleStatusChange(order.order_id, e.target.value)}
+                  >
+                    {orderStatusOptions.map(status => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </li>
           ))}
         </ul>
