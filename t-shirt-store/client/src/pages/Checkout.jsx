@@ -100,8 +100,8 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
         id: item.id,
         name: item.name,
         image: item.coverImage,
-        size: item.selectedSize,
-        language: item.selectedLanguage,
+        size: item.size,
+        language: item.language,
         quantity: item.quantity,
         price: item.price
       })),
