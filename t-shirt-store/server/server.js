@@ -397,6 +397,12 @@ app.post('/api/products', authenticateToken, async (req, res) => {
   }
   try {
     const { name, description, price, sizes, languages, coverimage, images } = req.body;
+    
+    // Check if the price is a valid number
+    if (isNaN(price)) {
+      return res.status(400).json({ error: 'Il prezzo deve essere un numero valido.' });
+    }
+    
     const result = await pool.query(
       'INSERT INTO product (name, description, price, sizes, languages, coverimage, images) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
       [name, description, price, sizes, languages, coverimage, images]
@@ -404,7 +410,7 @@ app.post('/api/products', authenticateToken, async (req, res) => {
     res.status(201).json({ message: 'Prodotto inserito con successo!', product: result.rows[0] });
   } catch (err) {
     console.error('Errore nell\'inserimento del prodotto:', err);
-    res.status(500).json({ error: 'Errore nell\'inserimento del prodotto' });
+    res.status(500).json({ error: 'Errore nell\'inserimento del prodotto', details: err.message });
   }
 });
 
@@ -464,7 +470,6 @@ app.delete('/api/products/:id', authenticateToken, async (req, res) => {
     return res.status(403).json({ error: 'Accesso negato. Solo gli amministratori possono eliminare prodotti.' });
   }
   try {
-    const { id } = req.params;
     await pool.query('DELETE FROM product WHERE id = $1', [id]);
     res.json({ message: 'Prodotto eliminato con successo' });
   } catch (err) {
