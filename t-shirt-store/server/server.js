@@ -572,7 +572,7 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
             'quantity', oi.quantity,
             'price', oi.price,
             'size', oi.size,
-            'language', oi.language
+            'language', oi.language,
             'product_image', oi.product_image
           )
         ) AS items
