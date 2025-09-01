@@ -25,7 +25,7 @@ const setupDatabase = async () => {
   let client; // Dichiarazione della variabile qui
   try {
     client = await pool.connect(); // Assegnazione della variabile all'interno del try
-    console.log('Database tables verified and created if not exist.');
+    console.log('Configurazione database in corso...');
     
     // Creazione tabella 'users'
     await client.query(`
@@ -47,7 +47,7 @@ const setupDatabase = async () => {
       );
     `);
 
-    // Creazione tabella 'product'
+    // Creazione tabella 'product' con images come TEXT
     await client.query(`
       CREATE TABLE IF NOT EXISTS product (
         id SERIAL PRIMARY KEY,
@@ -57,8 +57,20 @@ const setupDatabase = async () => {
         sizes TEXT[],
         languages TEXT[],
         coverimage VARCHAR(255),
-        images JSONB
+        images TEXT
       );
+    `);
+
+    // Assicurati che la sequenza dell'ID funzioni correttamente
+    await client.query(`
+      DO $$
+      BEGIN
+        -- Assicurati che la sequenza sia configurata correttamente
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'product') THEN
+          -- Ripristina la sequenza dell'ID al valore corretto
+          PERFORM setval('product_id_seq', COALESCE((SELECT MAX(id) FROM product), 0) + 1, false);
+        END IF;
+      END $$;
     `);
 
     // Creazione tabella 'orders'
@@ -106,7 +118,7 @@ const setupDatabase = async () => {
 };
 
 // Configurazione Nodemailer
-const transporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransporter({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
@@ -398,6 +410,8 @@ app.post('/api/products', authenticateToken, async (req, res) => {
   try {
     const { name, description, price, sizes, languages, coverimage, images } = req.body;
     
+    console.log('Dati ricevuti per nuovo prodotto:', { name, description, price, sizes, languages, coverimage, images });
+    
     // Check if the price is a valid number
     if (isNaN(price)) {
       return res.status(400).json({ error: 'Il prezzo deve essere un numero valido.' });
@@ -407,6 +421,8 @@ app.post('/api/products', authenticateToken, async (req, res) => {
       'INSERT INTO product (name, description, price, sizes, languages, coverimage, images) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
       [name, description, price, sizes, languages, coverimage, images]
     );
+    
+    console.log('Prodotto inserito con successo:', result.rows[0]);
     res.status(201).json({ message: 'Prodotto inserito con successo!', product: result.rows[0] });
   } catch (err) {
     console.error('Errore nell\'inserimento del prodotto:', err);
@@ -548,7 +564,7 @@ app.get('/api/orders/:orderId/items', async (req, res) => {
   }
 });
 
-// Nuova API per ottenere tutti gli ordini (solo per admin)
+// API per ottenere tutti gli ordini (solo per admin)
 app.get('/api/admin/orders', authenticateToken, async (req, res) => {
   if (req.user.id !== 1) {
     return res.status(403).json({ error: 'Accesso negato. Solo gli amministratori possono visualizzare gli ordini.' });
@@ -595,7 +611,7 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
   }
 });
 
-// Nuova API per eliminare un ordine (solo per admin)
+// API per eliminare un ordine (solo per admin)
 app.delete('/api/admin/orders/:id', authenticateToken, async (req, res) => {
   if (req.user.id !== 1) {
     return res.status(403).json({ error: 'Accesso negato. Solo gli amministratori possono eliminare gli ordini.' });
@@ -649,7 +665,7 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
   }
 });
 
-// Aggiungi un endpoint per il controllo dello stato del server
+// Endpoint per il controllo dello stato del server
 app.get('/api/status', (req, res) => {
   res.status(200).json({ message: 'Server is running successfully.' });
 });

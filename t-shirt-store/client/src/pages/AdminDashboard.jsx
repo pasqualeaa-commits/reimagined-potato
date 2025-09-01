@@ -114,7 +114,9 @@ const AdminDashboard = ({ user }) => {
   const handleAddProduct = async (e) => {
     e.preventDefault();
     
-    // Converti il prezzo in numero prima di inviare
+    // Costruisci la stringa JSON per le immagini (colonna TEXT)
+    const imagesString = JSON.stringify(newProduct.images);
+    
     const productData = {
         name: newProduct.name,
         description: newProduct.description,
@@ -122,14 +124,25 @@ const AdminDashboard = ({ user }) => {
         sizes: availableSizes,
         languages: availableLanguages,
         coverimage: newProduct.coverimage,
-        images: newProduct.images
+        images: imagesString // ✅ Stringa JSON per colonna TEXT
     };
     
+    console.log('Dati prodotto da inviare:', productData);
+    console.log('Tipo di images:', typeof productData.images);
+    console.log('Contenuto images:', productData.images);
+    
     try {
-      await axios.post('https://reimagined-potato-1.onrender.com/api/products', productData, {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await axios.post('https://reimagined-potato-1.onrender.com/api/products', productData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
+      
+      console.log('Risposta dal server:', response.data);
       setPopup({ isVisible: true, message: 'Prodotto aggiunto con successo!', type: 'success' });
+      
+      // Reset form
       setNewProduct({
         name: '',
         description: '',
@@ -137,10 +150,12 @@ const AdminDashboard = ({ user }) => {
         coverimage: '',
         images: {}
       });
+      
       fetchProducts();
     } catch (err) {
-      console.error('Errore durante l\'aggiunta del prodotto:', err);
-      setPopup({ isVisible: true, message: 'Errore durante l\'aggiunta del prodotto. Controlla il formato dei dati.', type: 'error' });
+      console.error('Errore durante l\'aggiunta del prodotto:', err.response?.data || err);
+      const errorMessage = err.response?.data?.error || err.response?.data?.details || 'Errore durante l\'aggiunta del prodotto.';
+      setPopup({ isVisible: true, message: errorMessage, type: 'error' });
     }
   };
 
@@ -244,6 +259,7 @@ const AdminDashboard = ({ user }) => {
               ></textarea>
               <input
                 type="number"
+                step="0.01"
                 name="price"
                 placeholder="Prezzo"
                 value={newProduct.price}
@@ -260,6 +276,7 @@ const AdminDashboard = ({ user }) => {
           </div>
 
           <div className="form-row">
+              <h5>Immagini per ogni lingua:</h5>
               {availableLanguages.map(lang => (
                   <input
                       key={lang}
@@ -280,8 +297,15 @@ const AdminDashboard = ({ user }) => {
           <ul>
             {products.map(product => (
               <li key={product.id}>
-                {product.name} - Prezzo: €{product.price}
-                <button className="delete-button" onClick={() => handleDeleteProduct(product.id)}>Elimina Prodotto</button>
+                <div>
+                  <strong>{product.name}</strong> - Prezzo: €{product.price}
+                  <br />
+                  <small>{product.description}</small>
+                  <br />
+                  <button className="delete-button" onClick={() => handleDeleteProduct(product.id)}>
+                    Elimina Prodotto
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
