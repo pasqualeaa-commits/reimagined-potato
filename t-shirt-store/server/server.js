@@ -57,7 +57,7 @@ const setupDatabase = async () => {
         sizes TEXT[],
         languages TEXT[],
         coverimage VARCHAR(255),
-        images JSONB,
+        images JSONB
       );
     `);
 
