@@ -50,21 +50,53 @@ const Profilo = ({ user, onLogout, onUpdateUser }) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+    
     try {
+      // Recupera il token dal localStorage
+      const token = localStorage.getItem('userToken');
+      
+      if (!token) {
+        setError("Token di autenticazione mancante. Effettua nuovamente il login.");
+        return;
+      }
+
       const res = await axios.put(
         `https://reimagined-potato-1.onrender.com/api/users/${user.id}`,
-        form
+        form,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
       );
 
       setSuccess("Profilo aggiornato!");
       if (onUpdateUser) onUpdateUser(res.data.user);
+      
+      // Reset password field dopo l'aggiornamento riuscito
+      setForm({ ...form, password: "" });
+      
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.error || "Errore nell'aggiornamento");
+      
+      if (err.response?.status === 401) {
+        setError("Sessione scaduta. Effettua nuovamente il login.");
+        // Rimuovi il token scaduto
+        localStorage.removeItem('userToken');
+        onLogout();
+        navigate("/");
+      } else if (err.response?.status === 403) {
+        setError("Non hai i permessi per modificare questo profilo.");
+      } else {
+        setError(err.response?.data?.error || "Errore nell'aggiornamento del profilo");
+      }
     }
   };
 
   const handleLogout = () => {
+    // Rimuovi il token dal localStorage
+    localStorage.removeItem('userToken');
     onLogout();
     navigate("/");
   };
@@ -202,11 +234,12 @@ const Profilo = ({ user, onLogout, onUpdateUser }) => {
             value={form.password}
             onChange={handleChange}
             className="form-input"
+            placeholder="Lascia vuoto per non modificare"
           />
         </div>
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           Salva modifiche
         </button>
@@ -215,7 +248,7 @@ const Profilo = ({ user, onLogout, onUpdateUser }) => {
       {error && <div className="text-red-600 mt-2">{error}</div>}
       <button
         onClick={handleLogout}
-        className="logout-button" 
+        className="logout-button mt-4" 
       >
         Logout
       </button>
