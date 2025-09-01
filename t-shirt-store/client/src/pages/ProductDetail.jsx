@@ -33,7 +33,8 @@ const ProductDetail = ({ onAddToCart }) => {
 
   // Cambia solo l'immagine in base alla lingua selezionata
   const description = product.description; 
-  const image = product.images[selectedLanguage] || product.images.IT;
+  const parsedImages = JSON.parse(product.images);
+  const image = parsedImages[selectedLanguage] || parsedImages.Italiano;
 
   return (
     <div className="product-detail-container">
