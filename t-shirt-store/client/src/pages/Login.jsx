@@ -45,7 +45,7 @@ const Login = ({ onLogin }) => {
 
       setTimeout(() => {
         navigate(from, { replace: true });
-      }, 3000);
+      }, 1500);
 
     } catch (err) {
       setPopupMessage(err.response?.data?.error || "Credenziali non valide. Riprova.");

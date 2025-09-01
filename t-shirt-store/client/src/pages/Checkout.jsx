@@ -116,14 +116,14 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
       
       const res = await axios.post("https://reimagined-potato-1.onrender.com/api/orders", orderData, config);
       
-      onClearCart();
       setPopupMessage("Ordine confermato con successo! Verrai reindirizzato a breve.");
       setPopupType("success");
       setIsPopupVisible(true);
 
       setTimeout(() => {
         navigate('/conferma-ordine', { state: { orderId: res.data.orderId } });
-      }, 3000);
+      }, 2000);
+      onClearCart();
 
     } catch (err) {
       console.error('Errore durante la conferma dell\'ordine:', err);
