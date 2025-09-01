@@ -470,6 +470,7 @@ app.delete('/api/products/:id', authenticateToken, async (req, res) => {
     return res.status(403).json({ error: 'Accesso negato. Solo gli amministratori possono eliminare prodotti.' });
   }
   try {
+    const { id } = req.params;
     await pool.query('DELETE FROM product WHERE id = $1', [id]);
     res.json({ message: 'Prodotto eliminato con successo' });
   } catch (err) {
