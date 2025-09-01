@@ -573,6 +573,7 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
             'price', oi.price,
             'size', oi.size,
             'language', oi.language
+            'product_image', oi.product_image
           )
         ) AS items
       FROM orders o
