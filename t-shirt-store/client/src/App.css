@@ -1096,3 +1096,31 @@ button[type="submit"]:hover {
 .search-input {
     width: 150px;
 }
+
+/* Stile base per il bottone di gestione amministratore */
+.admin-status-button {
+  background-color: #007bff; /* Un blu vivace */
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px; /* Angoli arrotondati */
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-left: 10px;
+}
+
+/* Effetto al passaggio del mouse */
+.admin-status-button:hover {
+  background-color: #0056b3; /* Un blu più scuro al passaggio del mouse */
+  transform: translateY(-2px); /* Sposta leggermente in alto per un effetto "float" */
+}
+
+/* Stile per il bottone di declassamento (Declassa a Utente) */
+.admin-status-button:not(.admin-status-button-promote) {
+  background-color: #dc3545; /* Un rosso per l'azione di declassare */
+}
+
+.admin-status-button:not(.admin-status-button-promote):hover {
+  background-color: #c82333;
+}
