@@ -17,6 +17,16 @@ const AdminDashboard = ({ user }) => {
   });
   const [openOrderId, setOpenOrderId] = useState(null);
 
+  // Stati per paginazione e filtro degli ordini
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 7;
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Nuovi stati per la paginazione dei prodotti
+  const [productCurrentPage, setProductCurrentPage] = useState(1);
+  const productsPerPage = 5;
+
   // Stati per il popup di feedback
   const [popup, setPopup] = useState({
     isVisible: false,
@@ -114,7 +124,6 @@ const AdminDashboard = ({ user }) => {
   const handleAddProduct = async (e) => {
     e.preventDefault();
     
-    // Costruisci la stringa JSON per le immagini (colonna TEXT)
     const imagesString = JSON.stringify(newProduct.images);
     
     const productData = {
@@ -124,12 +133,8 @@ const AdminDashboard = ({ user }) => {
         sizes: availableSizes,
         languages: availableLanguages,
         coverimage: newProduct.coverimage,
-        images: imagesString // ✅ Stringa JSON per colonna TEXT
+        images: imagesString
     };
-    
-    console.log('Dati prodotto da inviare:', productData);
-    console.log('Tipo di images:', typeof productData.images);
-    console.log('Contenuto images:', productData.images);
     
     try {
       const response = await axios.post('https://reimagined-potato-1.onrender.com/api/products', productData, {
@@ -139,10 +144,8 @@ const AdminDashboard = ({ user }) => {
         }
       });
       
-      console.log('Risposta dal server:', response.data);
       setPopup({ isVisible: true, message: 'Prodotto aggiunto con successo!', type: 'success' });
       
-      // Reset form
       setNewProduct({
         name: '',
         description: '',
@@ -180,6 +183,58 @@ const AdminDashboard = ({ user }) => {
     setPopup({ isVisible: false, message: '', type: '' });
   };
 
+  // Filtra gli ordini in base allo stato selezionato e al numero d'ordine
+  const filteredOrders = orders.filter(order => {
+    const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
+    const matchesSearch = String(order.order_id).includes(searchQuery);
+    return matchesStatus && matchesSearch;
+  });
+
+  // Calcoli per la paginazione degli ordini
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+
+  const renderOrderPageNumbers = () => {
+    const pageNumbers = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pageNumbers.push(i);
+    }
+    return pageNumbers.map(number => (
+      <button
+        key={number}
+        onClick={() => setCurrentPage(number)}
+        className={currentPage === number ? 'page-number active' : 'page-number'}
+      >
+        {number}
+      </button>
+    ));
+  };
+  
+  // Calcoli per la paginazione dei prodotti
+  const indexOfLastProduct = productCurrentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalProductPages = Math.ceil(products.length / productsPerPage);
+
+  const renderProductPageNumbers = () => {
+    const pageNumbers = [];
+    for (let i = 1; i <= totalProductPages; i++) {
+      pageNumbers.push(i);
+    }
+    return pageNumbers.map(number => (
+      <button
+        key={number}
+        onClick={() => setProductCurrentPage(number)}
+        className={productCurrentPage === number ? 'page-number active' : 'page-number'}
+      >
+        {number}
+      </button>
+    ));
+  };
+
+
   if (!user || user.id !== 1) {
     return null;
   }
@@ -191,9 +246,41 @@ const AdminDashboard = ({ user }) => {
         {error && <p className="error">{error}</p>}
         
         <h3>Gestione Ordini</h3>
-        {orders.length > 0 ? (
+
+        <div className="order-filters">
+          <label htmlFor="status-filter">Filtra per Stato:</label>
+          <select 
+            id="status-filter" 
+            value={filterStatus} 
+            onChange={(e) => {
+              setFilterStatus(e.target.value);
+              setCurrentPage(1); 
+            }}
+            className="status-select"
+          >
+            <option value="all">Tutti</option>
+            {orderStatusOptions.map(status => (
+              <option key={status} value={status}>{status}</option>
+            ))}
+          </select>
+
+          <label htmlFor="search-order">Cerca Ordine:</label>
+          <input
+            type="text"
+            id="search-order"
+            placeholder="N. ordine"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="search-input"
+          />
+        </div>
+
+        {currentOrders.length > 0 ? (
           <ul>
-            {orders.map(order => (
+            {currentOrders.map(order => (
               <li key={order.order_id}>
                 <div className="order-summary">
                   <span>Ordine #{order.order_id} - Totale: €{order.total_amount} - Stato: {order.status}</span>
@@ -235,7 +322,30 @@ const AdminDashboard = ({ user }) => {
             ))}
           </ul>
         ) : (
-          <p>Nessun ordine trovato.</p>
+          <p>Nessun ordine trovato con questo stato o numero.</p>
+        )}
+
+        {/* Controlli per la paginazione degli ordini */}
+        {filteredOrders.length > ordersPerPage && (
+          <div className="pagination">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="pagination-button prev"
+            >
+              &lt;
+            </button>
+            <div className="page-numbers">
+              {renderOrderPageNumbers()}
+            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="pagination-button next"
+            >
+              &gt;
+            </button>
+          </div>
         )}
         
         <h3>Gestione Prodotti</h3>
@@ -293,9 +403,9 @@ const AdminDashboard = ({ user }) => {
         </form>
         
         <h4>Elenco Prodotti</h4>
-        {products.length > 0 ? (
+        {currentProducts.length > 0 ? (
           <ul>
-            {products.map(product => (
+            {currentProducts.map(product => (
               <li key={product.id}>
                 <div>
                   <strong>{product.name}</strong> - Prezzo: €{product.price}
@@ -312,6 +422,30 @@ const AdminDashboard = ({ user }) => {
         ) : (
           <p>Nessun prodotto trovato.</p>
         )}
+      
+        {/* Controlli per la paginazione dei prodotti */}
+        {products.length > productsPerPage && (
+          <div className="pagination">
+            <button
+              onClick={() => setProductCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={productCurrentPage === 1}
+              className="pagination-button prev"
+            >
+              &lt;
+            </button>
+            <div className="page-numbers">
+              {renderProductPageNumbers()}
+            </div>
+            <button
+              onClick={() => setProductCurrentPage(prev => Math.min(totalProductPages, prev + 1))}
+              disabled={productCurrentPage === totalProductPages}
+              className="pagination-button next"
+            >
+              &gt;
+            </button>
+          </div>
+        )}
+
       </div>
 
       {/* Rendering condizionale del popup */}

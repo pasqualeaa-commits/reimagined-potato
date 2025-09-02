@@ -18,7 +18,7 @@ import RecuperoPassword from './pages/RecuperoPassword';
 import ReimpostaPassword from './pages/ReimpostaPassword';
 import About from './pages/About';
 import Contact from './pages/Contact';
-import AdminDashboard from './pages/AdminDashboard'; // Importa il nuovo componente
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   const [cartItems, setCartItems] = useState(() => {
@@ -26,28 +26,60 @@ function App() {
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
-  const [user, setUser] = useState(null);
+  // Inizializza l'utente dai dati salvati in localStorage
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+  
   const [loading, setLoading] = useState(true);
 
   // Effetto per controllare lo stato di login all'avvio dell'app
   useEffect(() => {
     const checkLoginStatus = async () => {
       const token = localStorage.getItem('userToken');
-      if (token) {
+      const savedUser = localStorage.getItem('user');
+      
+      if (token && savedUser) {
+        try {
+          // Verifica che il token sia ancora valido
+          const res = await axios.get('https://reimagined-potato-1.onrender.com/api/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          // Se l'API restituisce dati diversi da quelli salvati, aggiorna
+          const apiUser = res.data;
+          if (JSON.stringify(apiUser) !== savedUser) {
+            localStorage.setItem('user', JSON.stringify(apiUser));
+            setUser(apiUser);
+          }
+        } catch (err) {
+          console.error('Sessione scaduta o non valida:', err);
+          // Rimuovi tutti i dati di sessione se il token non è valido
+          localStorage.removeItem('userToken');
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+      } else if (token && !savedUser) {
+        // Se c'è solo il token ma non i dati utente, recuperali
         try {
           const res = await axios.get('https://reimagined-potato-1.onrender.com/api/me', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
           });
-          setUser(res.data.user);
+          const userData = res.data;
+          localStorage.setItem('user', JSON.stringify(userData));
+          setUser(userData);
         } catch (err) {
-          console.error('Sessione scaduta o non valida:', err);
+          console.error('Errore nel recupero dei dati utente:', err);
           localStorage.removeItem('userToken');
-          localStorage.removeItem('user');
           setUser(null);
         }
       }
+      
       setLoading(false);
     };
 
@@ -110,6 +142,8 @@ function App() {
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   const handleLogin = (userData) => {
+    // Salva sia l'utente che il token quando si effettua il login
+    localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
   
