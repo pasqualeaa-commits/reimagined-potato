@@ -857,6 +857,35 @@ app.delete("/api/admin/users/:id", authenticateAdmin, async (req, res) => {
   }
 });
 
+// API per impostare un utente come admin (solo per admin)
+app.put("/api/admin/users/:id/set-admin", authenticateAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { is_admin } = req.body;
+
+  if (req.user.id === parseInt(id)) {
+    return res.status(400).json({ error: "Non puoi modificare il tuo stato di amministratore." });
+  }
+
+  try {
+    const result = await pool.query(
+      "UPDATE users SET is_admin = $1 WHERE id = $2 RETURNING *",
+      [is_admin, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Utente non trovato." });
+    }
+
+    res.json({
+      message: `Stato di amministratore aggiornato con successo per l'utente ${result.rows[0].email}.`,
+      user: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Errore durante l'aggiornamento dello stato di amministratore:", err);
+    res.status(500).json({ error: "Errore durante l'aggiornamento dello stato di amministratore." });
+  }
+});
+
 
 // Endpoint per il controllo dello stato del server
 app.get("/api/status", (req, res) => {

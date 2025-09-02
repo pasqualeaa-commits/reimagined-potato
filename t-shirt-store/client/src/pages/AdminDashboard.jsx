@@ -47,6 +47,7 @@ const AdminDashboard = ({ user }) => {
   const orderStatusOptions = ['pending', 'shipped', 'delivered', 'cancelled'];
 
   useEffect(() => {
+    // Controllo se l'utente è un amministratore prima di caricare la dashboard
     if (!user || !user.isAdmin) {
       navigate('/');
       return;
@@ -132,6 +133,27 @@ const AdminDashboard = ({ user }) => {
       } catch (err) {
         console.error('Errore durante l\'eliminazione dell\'utente:', err);
         const errorMessage = err.response?.data?.error || 'Errore durante l\'eliminazione dell\'utente.';
+        setPopup({ isVisible: true, message: errorMessage, type: 'error' });
+      }
+    }
+  };
+  
+  const handleSetAdminStatus = async (userId, isAdmin) => {
+    if (user.id === userId) {
+      setPopup({ isVisible: true, message: 'Non puoi modificare il tuo stato di amministratore.', type: 'error' });
+      return;
+    }
+
+    if (window.confirm(`Sei sicuro di voler ${isAdmin ? 'declassare' : 'promuovere'} questo utente?`)) {
+      try {
+        await axios.put(`https://reimagined-potato-1.onrender.com/api/admin/users/${userId}/set-admin`, { is_admin: !isAdmin }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setPopup({ isVisible: true, message: 'Stato amministratore aggiornato con successo!', type: 'success' });
+        fetchUsers();
+      } catch (err) {
+        console.error('Errore durante l\'aggiornamento dello stato di amministratore:', err);
+        const errorMessage = err.response?.data?.error || 'Errore durante l\'aggiornamento dello stato di amministratore.';
         setPopup({ isVisible: true, message: errorMessage, type: 'error' });
       }
     }
@@ -513,11 +535,16 @@ const AdminDashboard = ({ user }) => {
               <li key={userItem.id}>
                 <div>
                   <strong>{userItem.first_name} {userItem.last_name}</strong> - {userItem.email} 
-                  {userItem.is_admin && <span> (Admin)</span>}
+                  {userItem.is_admin ? <span> (Amministratore)</span> : <span> (Utente Standard)</span>}
                   {user.id !== userItem.id && (
-                    <button className="delete-button" onClick={() => handleDeleteUser(userItem.id)}>
-                      Elimina Utente
-                    </button>
+                    <>
+                      <button className="delete-button" onClick={() => handleDeleteUser(userItem.id)}>
+                        Elimina Utente
+                      </button>
+                      <button onClick={() => handleSetAdminStatus(userItem.id, userItem.is_admin)}>
+                        {userItem.is_admin ? 'Declassa a Utente' : 'Promuovi a Admin'}
+                      </button>
+                    </>
                   )}
                 </div>
               </li>
