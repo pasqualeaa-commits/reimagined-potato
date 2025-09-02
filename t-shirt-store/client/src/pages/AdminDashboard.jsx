@@ -86,7 +86,7 @@ const AdminDashboard = ({ user }) => {
       );
       // Ordina i prodotti per nome in ordine alfabetico
       const sortedProducts = res.data.sort((a, b) =>
-        a.email.localeCompare(b.email)
+        a.name.localeCompare(b.name)
       );
       setProducts(sortedProducts);
     } catch (err) {
@@ -103,9 +103,9 @@ const AdminDashboard = ({ user }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      // Ordina gli utenti per nome in ordine alfabetico
+      // Ordina gli utenti per email in ordine alfabetico
       const sortedUsers = res.data.sort((a, b) =>
-        a.first_name.localeCompare(b.first_name)
+        a.email.localeCompare(b.email)
       );
       setUsers(sortedUsers);
     } catch (err) {
