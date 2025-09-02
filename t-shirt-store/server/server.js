@@ -27,7 +27,7 @@ const setupDatabase = async () => {
     client = await pool.connect(); // Assegnazione della variabile all'interno del try
     console.log("Configurazione database in corso...");
 
-    // Creazione tabella 'users'
+    // Creazione tabella 'users' con colonna is_admin
     await client.query(`
       CREATE TABLE IF NOT EXISTS "users" (
         id SERIAL PRIMARY KEY,
@@ -43,8 +43,14 @@ const setupDatabase = async () => {
         phone_number VARCHAR(20),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         password_reset_token VARCHAR(255),
-        password_reset_expires TIMESTAMP WITH TIME ZONE
+        password_reset_expires TIMESTAMP WITH TIME ZONE,
+        is_admin BOOLEAN DEFAULT FALSE
       );
+    `);
+    
+    // Aggiorna l'utente con ID 1 per renderlo amministratore, se esiste
+    await client.query(`
+      UPDATE users SET is_admin = TRUE WHERE id = 1 AND is_admin = FALSE;
     `);
 
     // Creazione tabella 'product' con images come TEXT
@@ -146,12 +152,23 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Middleware per la verifica del token e dei privilegi di admin
+const authenticateAdmin = (req, res, next) => {
+  authenticateToken(req, res, () => {
+    if (req.user.is_admin) {
+      next();
+    } else {
+      res.status(403).json({ error: 'Accesso negato. Richiesti privilegi di amministratore.' });
+    }
+  });
+};
+
 // API per ottenere i dati dell'utente autenticato
 app.get("/api/me", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const result = await pool.query(
-      'SELECT id, first_name, last_name, email, address, city, province, zip_code, country, phone_number FROM "users" WHERE id = $1',
+      'SELECT id, first_name, last_name, email, address, city, province, zip_code, country, phone_number, is_admin FROM "users" WHERE id = $1',
       [userId]
     );
     if (result.rows.length > 0) {
@@ -167,6 +184,7 @@ app.get("/api/me", authenticateToken, async (req, res) => {
         zipCode: user.zip_code,
         country: user.country,
         phoneNumber: user.phone_number,
+        isAdmin: user.is_admin,
       });
     } else {
       res.status(404).json({ error: "Utente non trovato" });
@@ -229,7 +247,7 @@ app.post("/api/register", async (req, res) => {
 
     const user = result.rows[0];
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, is_admin: user.is_admin },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
@@ -247,6 +265,7 @@ app.post("/api/register", async (req, res) => {
         zipCode: user.zip_code,
         country: user.country,
         phoneNumber: user.phone_number,
+        isAdmin: user.is_admin
       },
       token: token,
     });
@@ -276,7 +295,7 @@ app.post("/api/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, is_admin: user.is_admin },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
@@ -294,6 +313,7 @@ app.post("/api/login", async (req, res) => {
         zipCode: user.zip_code,
         country: user.country,
         phoneNumber: user.phone_number,
+        isAdmin: user.is_admin
       },
       token: token,
     });
@@ -319,7 +339,7 @@ app.put("/api/users/:id", authenticateToken, async (req, res) => {
     password,
   } = req.body;
 
-  if (req.user.id !== parseInt(id)) {
+  if (req.user.id !== parseInt(id) && !req.user.is_admin) {
     return res
       .status(403)
       .json({
@@ -363,7 +383,7 @@ app.put("/api/users/:id", authenticateToken, async (req, res) => {
   values.push(id);
   const updateQuery = `UPDATE "users" SET ${updateFields.join(
     ", "
-  )} WHERE id = $${paramIndex} RETURNING id, first_name, last_name, email, address, city, province, zip_code, country, phone_number`;
+  )} WHERE id = $${paramIndex} RETURNING id, first_name, last_name, email, address, city, province, zip_code, country, phone_number, is_admin`;
 
   try {
     const result = await pool.query(updateQuery, values);
@@ -384,6 +404,7 @@ app.put("/api/users/:id", authenticateToken, async (req, res) => {
         zipCode: user.zip_code,
         country: user.country,
         phoneNumber: user.phone_number,
+        isAdmin: user.is_admin
       },
     });
   } catch (err) {
@@ -481,15 +502,7 @@ app.post("/api/password-reset", async (req, res) => {
 });
 
 // API per l'inserimento di un prodotto (protetta per admin)
-app.post("/api/products", authenticateToken, async (req, res) => {
-  if (req.user.id !== 1) {
-    return res
-      .status(403)
-      .json({
-        error:
-          "Accesso negato. Solo gli amministratori possono aggiungere prodotti.",
-      });
-  }
+app.post("/api/products", authenticateAdmin, async (req, res) => {
   try {
     const { name, description, price, sizes, languages, coverimage, images } =
       req.body;
@@ -563,15 +576,7 @@ app.get("/api/products", async (req, res) => {
 });
 
 // API per l'aggiornamento di un prodotto (protetta per admin)
-app.put("/api/products/:id", authenticateToken, async (req, res) => {
-  if (req.user.id !== 1) {
-    return res
-      .status(403)
-      .json({
-        error:
-          "Accesso negato. Solo gli amministratori possono aggiornare prodotti.",
-      });
-  }
+app.put("/api/products/:id", authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, price, sizes, languages, coverimage, images } =
@@ -596,15 +601,7 @@ app.put("/api/products/:id", authenticateToken, async (req, res) => {
 });
 
 // API per eliminare un prodotto (protetta per admin)
-app.delete("/api/products/:id", authenticateToken, async (req, res) => {
-  if (req.user.id !== 1) {
-    return res
-      .status(403)
-      .json({
-        error:
-          "Accesso negato. Solo gli amministratori possono eliminare prodotti.",
-      });
-  }
+app.delete("/api/products/:id", authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query("DELETE FROM product WHERE id = $1", [id]);
@@ -721,16 +718,7 @@ app.get("/api/orders/:orderId/items", async (req, res) => {
 });
 
 // API per ottenere tutti gli ordini (solo per admin)
-app.get("/api/admin/orders", authenticateToken, async (req, res) => {
-  if (req.user.id !== 1) {
-    return res
-      .status(403)
-      .json({
-        error:
-          "Accesso negato. Solo gli amministratori possono visualizzare gli ordini.",
-      });
-  }
-
+app.get("/api/admin/orders", authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -773,16 +761,7 @@ app.get("/api/admin/orders", authenticateToken, async (req, res) => {
 });
 
 // API per eliminare un ordine (solo per admin)
-app.delete("/api/admin/orders/:id", authenticateToken, async (req, res) => {
-  if (req.user.id !== 1) {
-    return res
-      .status(403)
-      .json({
-        error:
-          "Accesso negato. Solo gli amministratori possono eliminare gli ordini.",
-      });
-  }
-
+app.delete("/api/admin/orders/:id", authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   const client = await pool.connect();
   try {
@@ -813,16 +792,7 @@ app.delete("/api/admin/orders/:id", authenticateToken, async (req, res) => {
 });
 
 // API per aggiornare lo stato di un ordine (solo per admin)
-app.put("/api/admin/orders/:id/status", authenticateToken, async (req, res) => {
-  if (req.user.id !== 1) {
-    return res
-      .status(403)
-      .json({
-        error:
-          "Accesso negato. Solo gli amministratori possono aggiornare lo stato degli ordini.",
-      });
-  }
-
+app.put("/api/admin/orders/:id/status", authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
@@ -852,6 +822,41 @@ app.put("/api/admin/orders/:id/status", authenticateToken, async (req, res) => {
       });
   }
 });
+
+// NUOVI ENDPOINT PER LA GESTIONE UTENTI
+// API per ottenere tutti gli utenti (solo per admin)
+app.get("/api/admin/users", authenticateAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, first_name, last_name, email, is_admin FROM "users" ORDER BY id ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Errore nel recupero degli utenti:", err);
+    res.status(500).json({ error: "Errore nel recupero degli utenti" });
+  }
+});
+
+// API per eliminare un utente (solo per admin)
+app.delete("/api/admin/users/:id", authenticateAdmin, async (req, res) => {
+  const { id } = req.params;
+  
+  if (parseInt(id) === req.user.id) {
+    return res.status(400).json({ error: "Non puoi eliminare il tuo stesso account." });
+  }
+  
+  try {
+    const result = await pool.query('DELETE FROM "users" WHERE id = $1 RETURNING id', [id]);
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Utente non trovato." });
+    }
+    
+    res.json({ message: "Utente eliminato con successo." });
+  } catch (err) {
+    console.error("Errore durante l'eliminazione dell'utente:", err);
+    res.status(500).json({ error: "Errore durante l'eliminazione dell'utente" });
+  }
+});
+
 
 // Endpoint per il controllo dello stato del server
 app.get("/api/status", (req, res) => {

@@ -7,6 +7,7 @@ import FeedbackPopup from '../components/FeedbackPopup';
 const AdminDashboard = ({ user }) => {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
+  const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -23,9 +24,13 @@ const AdminDashboard = ({ user }) => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Nuovi stati per la paginazione dei prodotti
+  // Stati per la paginazione dei prodotti
   const [productCurrentPage, setProductCurrentPage] = useState(1);
   const productsPerPage = 5;
+  
+  // Nuovi stati per la paginazione degli utenti
+  const [userCurrentPage, setUserCurrentPage] = useState(1);
+  const usersPerPage = 5;
 
   // Stati per il popup di feedback
   const [popup, setPopup] = useState({
@@ -42,13 +47,14 @@ const AdminDashboard = ({ user }) => {
   const orderStatusOptions = ['pending', 'shipped', 'delivered', 'cancelled'];
 
   useEffect(() => {
-    if (!user || user.id !== 1) {
+    if (!user || !user.isAdmin) {
       navigate('/');
       return;
     }
 
     fetchOrders();
     fetchProducts();
+    fetchUsers();
   }, [user, navigate]);
 
   const fetchOrders = async () => {
@@ -70,6 +76,18 @@ const AdminDashboard = ({ user }) => {
     } catch (err) {
       console.error('Errore nel recupero dei prodotti:', err);
       setError('Impossibile caricare i prodotti.');
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get('https://reimagined-potato-1.onrender.com/api/admin/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUsers(res.data);
+    } catch (err) {
+      console.error('Errore nel recupero degli utenti:', err);
+      setError('Impossibile caricare gli utenti.');
     }
   };
 
@@ -99,6 +117,22 @@ const AdminDashboard = ({ user }) => {
       } catch (err) {
         console.error('Errore durante l\'eliminazione del prodotto:', err);
         setPopup({ isVisible: true, message: 'Errore durante l\'eliminazione del prodotto.', type: 'error' });
+      }
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (window.confirm('Sei sicuro di voler eliminare questo utente?')) {
+      try {
+        await axios.delete(`https://reimagined-potato-1.onrender.com/api/admin/users/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setPopup({ isVisible: true, message: 'Utente eliminato con successo!', type: 'success' });
+        fetchUsers();
+      } catch (err) {
+        console.error('Errore durante l\'eliminazione dell\'utente:', err);
+        const errorMessage = err.response?.data?.error || 'Errore durante l\'eliminazione dell\'utente.';
+        setPopup({ isVisible: true, message: errorMessage, type: 'error' });
       }
     }
   };
@@ -233,9 +267,31 @@ const AdminDashboard = ({ user }) => {
       </button>
     ));
   };
+  
+  // Calcoli per la paginazione degli utenti
+  const indexOfLastUser = userCurrentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
+  const totalUserPages = Math.ceil(users.length / usersPerPage);
+
+  const renderUserPageNumbers = () => {
+    const pageNumbers = [];
+    for (let i = 1; i <= totalUserPages; i++) {
+      pageNumbers.push(i);
+    }
+    return pageNumbers.map(number => (
+      <button
+        key={number}
+        onClick={() => setUserCurrentPage(number)}
+        className={userCurrentPage === number ? 'page-number active' : 'page-number'}
+      >
+        {number}
+      </button>
+    ));
+  };
 
 
-  if (!user || user.id !== 1) {
+  if (!user || !user.isAdmin) {
     return null;
   }
 
@@ -439,6 +495,54 @@ const AdminDashboard = ({ user }) => {
             <button
               onClick={() => setProductCurrentPage(prev => Math.min(totalProductPages, prev + 1))}
               disabled={productCurrentPage === totalProductPages}
+              className="pagination-button next"
+            >
+              &gt;
+            </button>
+          </div>
+        )}
+        
+        <hr />
+        
+        <h3>Gestione Utenti</h3>
+        
+        <h4>Elenco Utenti</h4>
+        {currentUsers.length > 0 ? (
+          <ul>
+            {currentUsers.map(userItem => (
+              <li key={userItem.id}>
+                <div>
+                  <strong>{userItem.first_name} {userItem.last_name}</strong> - {userItem.email} 
+                  {userItem.is_admin && <span> (Admin)</span>}
+                  {user.id !== userItem.id && (
+                    <button className="delete-button" onClick={() => handleDeleteUser(userItem.id)}>
+                      Elimina Utente
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>Nessun utente trovato.</p>
+        )}
+        
+        {/* Controlli per la paginazione degli utenti */}
+        {users.length > usersPerPage && (
+          <div className="pagination">
+            <button
+              onClick={() => setUserCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={userCurrentPage === 1}
+              className="pagination-button prev"
+            >
+              &lt;
+            </button>
+            <div className="page-numbers">
+              {renderUserPageNumbers()}
+            </div>
+            <button
+              onClick={() => setUserCurrentPage(prev => Math.min(totalUserPages, prev + 1))}
+              disabled={userCurrentPage === totalUserPages}
               className="pagination-button next"
             >
               &gt;
