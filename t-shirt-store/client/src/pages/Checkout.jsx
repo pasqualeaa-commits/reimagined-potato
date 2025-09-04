@@ -136,7 +136,7 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
       setIsPopupVisible(true);
 
       setTimeout(() => {
-        navigate('/conferma-ordine', { state: { orderId: res.data.orderId } });
+        navigate('/conferma-ordine', { state: { order: orderData } });
       }, 2000);
       onClearCart();
 
@@ -244,7 +244,7 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
           </div>
 
           <div>
-            <label htmlFor="province" className="block text-sm font-bold mb-2">Provincia:</label>
+            <label htmlFor="province" className="block text-sm font-bold mb-2">Provincia (Sigla):</label>
             <input
               type="text"
               id="province"
