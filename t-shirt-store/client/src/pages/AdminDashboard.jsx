@@ -518,6 +518,7 @@ const AdminDashboard = ({ user }) => {
                         </li>
                       ))}
                     </ul>
+                    <p><strong>Metodo di pagamento:</strong> {order.payment_method || "Non specificato"}</p>
 
                     <h4>Cambia Stato</h4>
                     <select

@@ -6,7 +6,7 @@ const ProductDetail = ({ onAddToCart }) => {
   const { productId } = useParams();
   const [product, setProduct] = useState(null);
   const [selectedLanguage, setSelectedLanguage] = useState("IT");
-  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedSize, setSelectedSize] = useState("S");
 
   useEffect(() => {
     axios.get(`https://reimagined-potato-1.onrender.com/api/products/${productId}`)

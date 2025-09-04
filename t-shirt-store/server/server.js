@@ -47,7 +47,7 @@ const setupDatabase = async () => {
         is_admin BOOLEAN DEFAULT FALSE
       );
     `);
-    
+
     // Aggiorna l'utente con ID 1 per renderlo amministratore, se esiste
     await client.query(`
       UPDATE users SET is_admin = TRUE WHERE id = 1 AND is_admin = FALSE;
@@ -172,7 +172,9 @@ const authenticateAdmin = (req, res, next) => {
     if (req.user.is_admin) {
       next();
     } else {
-      res.status(403).json({ error: 'Accesso negato. Richiesti privilegi di amministratore.' });
+      res.status(403).json({
+        error: "Accesso negato. Richiesti privilegi di amministratore.",
+      });
     }
   });
 };
@@ -180,12 +182,12 @@ const authenticateAdmin = (req, res, next) => {
 // Funzione helper per formattare il metodo di pagamento
 const formatPaymentMethod = (paymentMethod) => {
   switch (paymentMethod) {
-    case 'cash_on_delivery':
-      return 'Pago alla consegna';
-    case 'paypal':
-      return 'PayPal';
+    case "cash_on_delivery":
+      return "Pago alla consegna";
+    case "paypal":
+      return "PayPal";
     default:
-      return paymentMethod || 'Non specificato';
+      return paymentMethod || "Non specificato";
   }
 };
 
@@ -291,7 +293,7 @@ app.post("/api/register", async (req, res) => {
         zipCode: user.zip_code,
         country: user.country,
         phoneNumber: user.phone_number,
-        isAdmin: user.is_admin
+        isAdmin: user.is_admin,
       },
       token: token,
     });
@@ -339,7 +341,7 @@ app.post("/api/login", async (req, res) => {
         zipCode: user.zip_code,
         country: user.country,
         phoneNumber: user.phone_number,
-        isAdmin: user.is_admin
+        isAdmin: user.is_admin,
       },
       token: token,
     });
@@ -366,12 +368,10 @@ app.put("/api/users/:id", authenticateToken, async (req, res) => {
   } = req.body;
 
   if (req.user.id !== parseInt(id) && !req.user.is_admin) {
-    return res
-      .status(403)
-      .json({
-        error:
-          "Accesso negato: non puoi modificare il profilo di un altro utente.",
-      });
+    return res.status(403).json({
+      error:
+        "Accesso negato: non puoi modificare il profilo di un altro utente.",
+    });
   }
 
   let updateFields = [
@@ -430,7 +430,7 @@ app.put("/api/users/:id", authenticateToken, async (req, res) => {
         zipCode: user.zip_code,
         country: user.country,
         phoneNumber: user.phone_number,
-        isAdmin: user.is_admin
+        isAdmin: user.is_admin,
       },
     });
   } catch (err) {
@@ -556,20 +556,16 @@ app.post("/api/products", authenticateAdmin, async (req, res) => {
     );
 
     console.log("Prodotto inserito con successo:", result.rows[0]);
-    res
-      .status(201)
-      .json({
-        message: "Prodotto inserito con successo!",
-        product: result.rows[0],
-      });
+    res.status(201).json({
+      message: "Prodotto inserito con successo!",
+      product: result.rows[0],
+    });
   } catch (err) {
     console.error("Errore nell'inserimento del prodotto:", err);
-    res
-      .status(500)
-      .json({
-        error: "Errore nell'inserimento del prodotto",
-        details: err.message,
-      });
+    res.status(500).json({
+      error: "Errore nell'inserimento del prodotto",
+      details: err.message,
+    });
   }
 });
 
@@ -642,7 +638,8 @@ app.delete("/api/products/:id", authenticateAdmin, async (req, res) => {
 app.post("/api/orders", async (req, res) => {
   const client = await pool.connect();
   try {
-    const { customerData, items, totalAmount, paymentMethod, userId } = req.body;
+    const { customerData, items, totalAmount, paymentMethod, userId } =
+      req.body;
 
     if (!customerData || !items || !totalAmount) {
       return res.status(400).json({ error: "Dati dell'ordine mancanti." });
@@ -700,11 +697,14 @@ app.post("/api/orders", async (req, res) => {
         `Totale: €${totalAmount}\n` +
         `Metodo di pagamento: ${paymentMethodText}\n` +
         `Articoli: ${items
-          .map((item) => `${item.name} (x${item.quantity})`)
+          .map(
+            (item) =>
+              `${item.name} - Taglia: ${item.size || "N/A"}, Lingua: ${item.language || "N/A"} (x${item.quantity})`)
           .join(", ")}\n\n` +
-        `${paymentMethod === 'cash_on_delivery' ? 
-          'Il pagamento sarà richiesto alla consegna.\n\n' : 
-          'Il pagamento è stato processato tramite PayPal.\n\n'
+        `${
+          paymentMethod === "cash_on_delivery"
+            ? "Il pagamento sarà richiesto alla consegna.\n\n"
+            : "Il pagamento verrà tramite PayPal,\nriceverai una richiesta di pagamento non appena sarà possibile\n\n"
         }` +
         `Riceverai un'ulteriore notifica quando il tuo ordine verrà spedito.`,
     };
@@ -848,11 +848,9 @@ app.put("/api/admin/orders/:id/status", authenticateAdmin, async (req, res) => {
       "Errore durante l'aggiornamento dello stato dell'ordine:",
       err
     );
-    res
-      .status(500)
-      .json({
-        error: "Errore durante l'aggiornamento dello stato dell'ordine",
-      });
+    res.status(500).json({
+      error: "Errore durante l'aggiornamento dello stato dell'ordine",
+    });
   }
 });
 
@@ -860,7 +858,9 @@ app.put("/api/admin/orders/:id/status", authenticateAdmin, async (req, res) => {
 // API per ottenere tutti gli utenti (solo per admin)
 app.get("/api/admin/users", authenticateAdmin, async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, first_name, last_name, email, is_admin FROM "users" ORDER BY id ASC');
+    const result = await pool.query(
+      'SELECT id, first_name, last_name, email, is_admin FROM "users" ORDER BY id ASC'
+    );
     res.json(result.rows);
   } catch (err) {
     console.error("Errore nel recupero degli utenti:", err);
@@ -871,53 +871,71 @@ app.get("/api/admin/users", authenticateAdmin, async (req, res) => {
 // API per eliminare un utente (solo per admin)
 app.delete("/api/admin/users/:id", authenticateAdmin, async (req, res) => {
   const { id } = req.params;
-  
+
   if (parseInt(id) === req.user.id) {
-    return res.status(400).json({ error: "Non puoi eliminare il tuo stesso account." });
-  }
-  
-  try {
-    const result = await pool.query('DELETE FROM "users" WHERE id = $1 RETURNING id', [id]);
-    
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: "Utente non trovato." });
-    }
-    
-    res.json({ message: "Utente eliminato con successo." });
-  } catch (err) {
-    console.error("Errore durante l'eliminazione dell'utente:", err);
-    res.status(500).json({ error: "Errore durante l'eliminazione dell'utente" });
-  }
-});
-
-// API per impostare un utente come admin (solo per admin)
-app.put("/api/admin/users/:id/set-admin", authenticateAdmin, async (req, res) => {
-  const { id } = req.params;
-  const { is_admin } = req.body;
-
-  if (req.user.id === parseInt(id)) {
-    return res.status(400).json({ error: "Non puoi modificare il tuo stato di amministratore." });
+    return res
+      .status(400)
+      .json({ error: "Non puoi eliminare il tuo stesso account." });
   }
 
   try {
     const result = await pool.query(
-      "UPDATE users SET is_admin = $1 WHERE id = $2 RETURNING *",
-      [is_admin, id]
+      'DELETE FROM "users" WHERE id = $1 RETURNING id',
+      [id]
     );
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Utente non trovato." });
     }
 
-    res.json({
-      message: `Stato di amministratore aggiornato con successo per l'utente ${result.rows[0].email}.`,
-      user: result.rows[0],
-    });
+    res.json({ message: "Utente eliminato con successo." });
   } catch (err) {
-    console.error("Errore durante l'aggiornamento dello stato di amministratore:", err);
-    res.status(500).json({ error: "Errore durante l'aggiornamento dello stato di amministratore." });
+    console.error("Errore durante l'eliminazione dell'utente:", err);
+    res
+      .status(500)
+      .json({ error: "Errore durante l'eliminazione dell'utente" });
   }
 });
+
+// API per impostare un utente come admin (solo per admin)
+app.put(
+  "/api/admin/users/:id/set-admin",
+  authenticateAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { is_admin } = req.body;
+
+    if (req.user.id === parseInt(id)) {
+      return res
+        .status(400)
+        .json({ error: "Non puoi modificare il tuo stato di amministratore." });
+    }
+
+    try {
+      const result = await pool.query(
+        "UPDATE users SET is_admin = $1 WHERE id = $2 RETURNING *",
+        [is_admin, id]
+      );
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: "Utente non trovato." });
+      }
+
+      res.json({
+        message: `Stato di amministratore aggiornato con successo per l'utente ${result.rows[0].email}.`,
+        user: result.rows[0],
+      });
+    } catch (err) {
+      console.error(
+        "Errore durante l'aggiornamento dello stato di amministratore:",
+        err
+      );
+      res.status(500).json({
+        error: "Errore durante l'aggiornamento dello stato di amministratore.",
+      });
+    }
+  }
+);
 
 // Endpoint per il controllo dello stato del server
 app.get("/api/status", (req, res) => {
