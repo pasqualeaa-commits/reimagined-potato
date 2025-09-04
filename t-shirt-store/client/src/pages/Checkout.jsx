@@ -19,6 +19,7 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
   });
   const [errors, setErrors] = useState({});
   const [saveInfo, setSaveInfo] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState(''); // Nuovo stato per il metodo di pagamento
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
@@ -32,6 +33,12 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
     allCountries.splice(italyIndex, 1);
   }
   const countries = ['Italy', '--------------------', ...allCountries];
+
+  // Opzioni metodi di pagamento
+  const paymentMethods = [
+    { value: 'cash_on_delivery', label: 'Pago alla consegna' },
+    { value: 'paypal', label: 'PayPal' }
+  ];
 
   useEffect(() => {
     if (user) {
@@ -67,6 +74,10 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
     setSaveInfo(e.target.checked);
   };
 
+  const handlePaymentMethodChange = (e) => {
+    setPaymentMethod(e.target.value);
+  };
+
   const validate = () => {
     let newErrors = {};
     if (!formData.firstName) newErrors.firstName = "Il nome è richiesto.";
@@ -75,6 +86,9 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
       newErrors.email = "L'email è richiesta.";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "L'indirizzo email non è valido.";
+    }
+    if (!paymentMethod) {
+      newErrors.paymentMethod = "Seleziona un metodo di pagamento.";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -106,6 +120,7 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
         price: item.price
       })),
       totalAmount: parseFloat(subtotal),
+      paymentMethod: paymentMethod, // Aggiunto metodo di pagamento
       userId: user ? user.id : null,
       saveInfo: saveInfo
     };
@@ -159,14 +174,14 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
           <div className="flex gap-4">
             <Link 
               to="/login" 
-              state={{ from: location.pathname }} // Correzione qui
+              state={{ from: location.pathname }}
               className="login-register-btn flex-1 text-center"
             >
               Accedi
             </Link>
             <Link 
               to="/register" 
-              state={{ from: location.pathname }} // Correzione qui
+              state={{ from: location.pathname }}
               className="login-register-btn flex-1 text-center"
             >
               Registrati
@@ -297,6 +312,32 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
             {errors.email && <p className="text-red-500 text-xs italic">{errors.email}</p>}
           </div>
 
+          {/* Nuova sezione per il metodo di pagamento */}
+          <div className="border-t pt-4">
+            <h3 className="text-xl font-semibold mb-4">Metodo di Pagamento</h3>
+            <div className="space-y-3">
+              {paymentMethods.map(method => (
+                <label key={method.value} className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value={method.value}
+                    checked={paymentMethod === method.value}
+                    onChange={handlePaymentMethodChange}
+                    className="form-radio h-4 w-4 text-blue-600"
+                  />
+                  <span className="text-gray-900 font-medium">{method.label}</span>
+                  {method.value === 'cash_on_delivery' && (
+                    <span className="text-sm text-gray-500 ml-2">
+                      (Paga direttamente al corriere)
+                    </span>
+                  )}
+                </label>
+              ))}
+            </div>
+            {errors.paymentMethod && <p className="text-red-500 text-xs italic mt-2">{errors.paymentMethod}</p>}
+          </div>
+
           {user && (
             <div>
               <label className="flex items-center space-x-2 mt-4">
@@ -316,7 +357,7 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
             className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline mt-4"
             disabled={isLoading}
           >
-            {isLoading ? 'Elaborazione...' : `Paga e Ordina ${subtotal} €`}
+            {isLoading ? 'Elaborazione...' : `Conferma Ordine ${subtotal} €`}
           </button>
         </form>
       </div>

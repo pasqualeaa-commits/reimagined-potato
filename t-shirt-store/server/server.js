@@ -79,7 +79,7 @@ const setupDatabase = async () => {
       END $$;
     `);
 
-    // Creazione tabella 'orders'
+    // Creazione tabella 'orders' con aggiunta del campo payment_method
     await client.query(`
       CREATE TABLE IF NOT EXISTS "orders" (
         id SERIAL PRIMARY KEY,
@@ -94,9 +94,23 @@ const setupDatabase = async () => {
         customer_zip_code VARCHAR(10),
         customer_country VARCHAR(255),
         customer_phone_number VARCHAR(20),
+        payment_method VARCHAR(50),
         status VARCHAR(50) DEFAULT 'pending',
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+
+    // Aggiunge la colonna payment_method se non esiste già
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'orders' AND column_name = 'payment_method'
+        ) THEN
+          ALTER TABLE orders ADD COLUMN payment_method VARCHAR(50);
+        END IF;
+      END $$;
     `);
 
     // Creazione tabella 'order_items'
@@ -125,7 +139,7 @@ const setupDatabase = async () => {
 };
 
 // Configurazione Nodemailer
-const transporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransporter({
   service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
@@ -161,6 +175,18 @@ const authenticateAdmin = (req, res, next) => {
       res.status(403).json({ error: 'Accesso negato. Richiesti privilegi di amministratore.' });
     }
   });
+};
+
+// Funzione helper per formattare il metodo di pagamento
+const formatPaymentMethod = (paymentMethod) => {
+  switch (paymentMethod) {
+    case 'cash_on_delivery':
+      return 'Pago alla consegna';
+    case 'paypal':
+      return 'PayPal';
+    default:
+      return paymentMethod || 'Non specificato';
+  }
 };
 
 // API per ottenere i dati dell'utente autenticato
@@ -612,11 +638,11 @@ app.delete("/api/products/:id", authenticateAdmin, async (req, res) => {
   }
 });
 
-// API per la creazione di un ordine con transazione
+// API per la creazione di un ordine con transazione (AGGIORNATA con metodo di pagamento)
 app.post("/api/orders", async (req, res) => {
   const client = await pool.connect();
   try {
-    const { customerData, items, totalAmount, userId } = req.body;
+    const { customerData, items, totalAmount, paymentMethod, userId } = req.body;
 
     if (!customerData || !items || !totalAmount) {
       return res.status(400).json({ error: "Dati dell'ordine mancanti." });
@@ -624,9 +650,9 @@ app.post("/api/orders", async (req, res) => {
 
     await client.query("BEGIN");
 
-    // Inserisci l'ordine nella tabella 'orders'
+    // Inserisci l'ordine nella tabella 'orders' includendo il payment_method
     const orderResult = await client.query(
-      'INSERT INTO "orders" (user_id, total_amount, customer_first_name, customer_last_name, customer_email, customer_address, customer_city, customer_province, customer_zip_code, customer_country, customer_phone_number) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id',
+      'INSERT INTO "orders" (user_id, total_amount, customer_first_name, customer_last_name, customer_email, customer_address, customer_city, customer_province, customer_zip_code, customer_country, customer_phone_number, payment_method) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id',
       [
         userId,
         totalAmount,
@@ -639,6 +665,7 @@ app.post("/api/orders", async (req, res) => {
         customerData.zipCode,
         customerData.country,
         customerData.phoneNumber,
+        paymentMethod,
       ]
     );
     const orderId = orderResult.rows[0].id;
@@ -661,7 +688,8 @@ app.post("/api/orders", async (req, res) => {
 
     await client.query("COMMIT");
 
-    // Inizia il nuovo blocco per l'invio dell'email
+    // Email di conferma con metodo di pagamento incluso
+    const paymentMethodText = formatPaymentMethod(paymentMethod);
     const mailOptions = {
       to: customerData.email,
       from: process.env.EMAIL_USER,
@@ -670,9 +698,14 @@ app.post("/api/orders", async (req, res) => {
         `Grazie per il tuo ordine! Il tuo ordine numero ${orderId} è stato confermato con successo.\n\n` +
         `Dettagli dell'ordine:\n` +
         `Totale: €${totalAmount}\n` +
+        `Metodo di pagamento: ${paymentMethodText}\n` +
         `Articoli: ${items
           .map((item) => `${item.name} (x${item.quantity})`)
           .join(", ")}\n\n` +
+        `${paymentMethod === 'cash_on_delivery' ? 
+          'Il pagamento sarà richiesto alla consegna.\n\n' : 
+          'Il pagamento è stato processato tramite PayPal.\n\n'
+        }` +
         `Riceverai un'ulteriore notifica quando il tuo ordine verrà spedito.`,
     };
 
@@ -683,7 +716,6 @@ app.post("/api/orders", async (req, res) => {
       console.error("Errore nell'invio dell'email di conferma:", emailErr);
       // Non c'è bisogno di fare il rollback del database, l'ordine è già salvato.
     }
-    // Fine del nuovo blocco
 
     res
       .status(201)
@@ -717,7 +749,7 @@ app.get("/api/orders/:orderId/items", async (req, res) => {
   }
 });
 
-// API per ottenere tutti gli ordini (solo per admin)
+// API per ottenere tutti gli ordini (solo per admin) - AGGIORNATA con payment_method
 app.get("/api/admin/orders", authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -726,6 +758,7 @@ app.get("/api/admin/orders", authenticateAdmin, async (req, res) => {
         o.user_id,
         o.total_amount, 
         o.status, 
+        o.payment_method,
         o.created_at,
         o.customer_first_name,
         o.customer_last_name,
@@ -885,7 +918,6 @@ app.put("/api/admin/users/:id/set-admin", authenticateAdmin, async (req, res) =>
     res.status(500).json({ error: "Errore durante l'aggiornamento dello stato di amministratore." });
   }
 });
-
 
 // Endpoint per il controllo dello stato del server
 app.get("/api/status", (req, res) => {
