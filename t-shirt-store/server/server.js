@@ -127,6 +127,18 @@ const setupDatabase = async () => {
       );
     `);
 
+    // Aggiunta della nuova tabella 'comments' per salvare le recensioni
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS comments (
+        id SERIAL PRIMARY KEY,
+        author VARCHAR(255) NOT NULL,
+        comment TEXT NOT NULL,
+        rating INTEGER NOT NULL,
+        is_anonymous BOOLEAN NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     console.log("Database tables verified and created if not exist.");
   } catch (err) {
     console.error("Errore durante la configurazione del database:", err);
@@ -936,6 +948,35 @@ app.put(
     }
   }
 );
+
+// Aggiungi qui i nuovi endpoint per i commenti
+// API per ottenere tutti i commenti
+app.get("/api/comments", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM comments ORDER BY created_at DESC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Errore nel recupero dei commenti:", err);
+    res.status(500).json({ error: "Errore nel recupero dei commenti" });
+  }
+});
+
+// API per creare un nuovo commento
+app.post("/api/comments", async (req, res) => {
+  const { author, comment, rating, isAnonymous } = req.body;
+  try {
+    const result = await pool.query(
+      "INSERT INTO comments (author, comment, rating, is_anonymous) VALUES ($1, $2, $3, $4) RETURNING *",
+      [author, comment, rating, isAnonymous]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error("Errore nella creazione del commento:", err);
+    res.status(500).json({ error: "Errore nella creazione del commento" });
+  }
+});
 
 // Endpoint per il controllo dello stato del server
 app.get("/api/status", (req, res) => {
