@@ -1532,3 +1532,33 @@ button[type="submit"]:hover {
 .page-number:hover {
     background-color: #dbeafe;
 }
+
+/* ... altri stili ... */
+
+/* NUOVA REGOLA: Rende il bordo rosso quando c'è un errore */
+.form-input.border-red-500 {
+  border-color: #ef4444; /* Colore rosso standard di Tailwind */
+}
+
+/* Nuova regola anche per il selettore 'select' */
+.form-select.border-red-500 {
+  border-color: #ef4444;
+}
+
+/* App.css */
+
+/* ... (codice esistente) ... */
+
+/* Stile per i campi con errore */
+.form-input-error {
+  border-color: #ef4444; /* Bordo rosso */
+}
+
+/* Stile per il testo di errore */
+.error-message {
+  color: #ef4444; /* Testo rosso */
+  font-style: italic;
+  font-weight: bold;
+  font-size: 0.75rem; /* ~12px */
+  margin-top: 0.25rem; /* ~4px */
+}

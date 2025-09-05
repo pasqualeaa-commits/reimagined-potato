@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import FeedbackPopup from "../components/FeedbackPopup"; // Importa il componente popup
+import FeedbackPopup from "../components/FeedbackPopup";
+import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Importa le icone di React Icons
 
 const ReimpostaPassword = () => {
   const { token } = useParams();
@@ -11,9 +12,14 @@ const ReimpostaPassword = () => {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
   const [popupType, setPopupType] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleClosePopup = () => {
     setIsPopupVisible(false);
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleSubmit = async (e) => {
@@ -34,22 +40,28 @@ const ReimpostaPassword = () => {
   };
 
   return (
-    <div className="p-8 max-w-md mx-auto">
-      <h2 className="text-xl font-bold mb-4">Reimposta Password</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="newPassword">Nuova password</label>
+    <div className="login-register-container">
+      <h2 className="form-title">Reimposta Password</h2>
+      <form onSubmit={handleSubmit} className="form-container">
+        <div className="password-container">
           <input
             name="newPassword"
             id="newPassword"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Nuova password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
-            className="form-input"
+            className="form-input password-input"
           />
+          <span
+            className="password-toggle"
+            onClick={togglePasswordVisibility}
+          >
+            {showPassword ? <FaEyeSlash /> : <FaEye />}
+          </span>
         </div>
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+        <button type="submit" className="login-button">
           Reimposta
         </button>
       </form>

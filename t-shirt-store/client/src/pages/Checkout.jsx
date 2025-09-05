@@ -19,7 +19,7 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
   });
   const [errors, setErrors] = useState({});
   const [saveInfo, setSaveInfo] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState(''); // Nuovo stato per il metodo di pagamento
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
@@ -34,7 +34,6 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
   }
   const countries = ['Italy', '--------------------', ...allCountries];
 
-  // Opzioni metodi di pagamento
   const paymentMethods = [
     { value: 'cash_on_delivery', label: 'Pago alla consegna' },
     { value: 'paypal', label: 'PayPal' }
@@ -82,6 +81,12 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
     let newErrors = {};
     if (!formData.firstName) newErrors.firstName = "Il nome è richiesto.";
     if (!formData.lastName) newErrors.lastName = "Il cognome è richiesto.";
+    if (!formData.address) newErrors.address = "L'indirizzo è richiesto.";
+    if (!formData.city) newErrors.city = "La città è richiesta.";
+    if (!formData.province) newErrors.province = "La provincia è richiesta.";
+    if (!formData.zipCode) newErrors.zipCode = "Il CAP è richiesto.";
+    if (!formData.country || formData.country === '--------------------') newErrors.country = "La nazione è richiesta.";
+    if (!formData.phoneNumber) newErrors.phoneNumber = "Il numero di telefono è richiesto.";
     if (!formData.email) {
       newErrors.email = "L'email è richiesta.";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -104,7 +109,7 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
       setIsPopupVisible(true);
       return;
     }
-    
+
     setIsLoading(true);
     setIsPopupVisible(false);
 
@@ -120,7 +125,7 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
         price: item.price
       })),
       totalAmount: parseFloat(subtotal),
-      paymentMethod: paymentMethod, // Aggiunto metodo di pagamento
+      paymentMethod: paymentMethod,
       userId: user ? user.id : null,
       saveInfo: saveInfo
     };
@@ -128,9 +133,9 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
     try {
       const token = localStorage.getItem('userToken');
       const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-      
+
       const res = await axios.post("https://reimagined-potato-1.onrender.com/api/orders", orderData, config);
-      
+
       setPopupMessage("Ordine confermato con successo! Verrai reindirizzato a breve.");
       setPopupType("success");
       setIsPopupVisible(true);
@@ -165,22 +170,22 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
   return (
     <div className="p-8 max-w-2xl mx-auto checkout-container">
       <h2 className="text-2xl font-bold mb-6 text-center">Checkout</h2>
-      
+
       {!user && (
         <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg shadow-inner mb-6 text-center">
           <p className="text-gray-700 font-semibold mb-3">
             Vuoi risparmiare tempo e velocizzare il processo di checkout?
           </p>
           <div className="flex gap-4">
-            <Link 
-              to="/login" 
+            <Link
+              to="/login"
               state={{ from: location.pathname }}
               className="login-register-btn flex-1 text-center"
             >
               Accedi
             </Link>
-            <Link 
-              to="/register" 
+            <Link
+              to="/register"
               state={{ from: location.pathname }}
               className="login-register-btn flex-1 text-center"
             >
@@ -192,59 +197,74 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
 
       <div className="md:w-full">
         <h3 className="text-xl font-semibold mb-4">Dati di Spedizione</h3>
+        <p className="text-gray-500 text-sm mb-4">
+          I campi contrassegnati con <span className="text-red-500">*</span> sono obbligatori.
+        </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="firstName" className="block text-sm font-bold mb-2">Nome:</label>
+            <label htmlFor="firstName" className="block text-sm font-bold mb-2">
+              Nome: <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               id="firstName"
               name="firstName"
               value={formData.firstName}
               onChange={handleChange}
-              className={`form-input ${errors.firstName ? 'border-red-500' : ''}`}
+              className={`form-input ${errors.firstName ? 'form-input-error' : ''}`}
             />
-            {errors.firstName && <p className="text-red-500 text-xs italic">{errors.firstName}</p>}
+            {errors.firstName && <p className="error-message">{errors.firstName}</p>}
           </div>
 
           <div>
-            <label htmlFor="lastName" className="block text-sm font-bold mb-2">Cognome:</label>
+            <label htmlFor="lastName" className="block text-sm font-bold mb-2">
+              Cognome: <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               id="lastName"
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
-              className={`form-input ${errors.lastName ? 'border-red-500' : ''}`}
+              className={`form-input ${errors.lastName ? 'form-input-error' : ''}`}
             />
-            {errors.lastName && <p className="text-red-500 text-xs italic">{errors.lastName}</p>}
+            {errors.lastName && <p className="error-message">{errors.lastName}</p>}
           </div>
 
           <div>
-            <label htmlFor="address" className="block text-sm font-bold mb-2">Indirizzo:</label>
+            <label htmlFor="address" className="block text-sm font-bold mb-2">
+              Indirizzo: <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               id="address"
               name="address"
               value={formData.address}
               onChange={handleChange}
-              className="form-input"
+              className={`form-input ${errors.address ? 'form-input-error' : ''}`}
             />
+            {errors.address && <p className="error-message">{errors.address}</p>}
           </div>
 
           <div>
-            <label htmlFor="city" className="block text-sm font-bold mb-2">Città:</label>
+            <label htmlFor="city" className="block text-sm font-bold mb-2">
+              Città: <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               id="city"
               name="city"
               value={formData.city}
               onChange={handleChange}
-              className="form-input"
+              className={`form-input ${errors.city ? 'form-input-error' : ''}`}
             />
+            {errors.city && <p className="error-message">{errors.city}</p>}
           </div>
 
           <div>
-            <label htmlFor="province" className="block text-sm font-bold mb-2">Provincia (Sigla):</label>
+            <label htmlFor="province" className="block text-sm font-bold mb-2">
+              Provincia (Sigla): <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               id="province"
@@ -252,12 +272,15 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
               value={formData.province}
               onChange={handleChange}
               maxLength="2"
-              className="form-input"
+              className={`form-input ${errors.province ? 'form-input-error' : ''}`}
             />
+            {errors.province && <p className="error-message">{errors.province}</p>}
           </div>
 
           <div>
-            <label htmlFor="zipCode" className="block text-sm font-bold mb-2">CAP:</label>
+            <label htmlFor="zipCode" className="block text-sm font-bold mb-2">
+              CAP: <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               id="zipCode"
@@ -265,18 +288,21 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
               value={formData.zipCode}
               onChange={handleChange}
               maxLength="5"
-              className="form-input"
+              className={`form-input ${errors.zipCode ? 'form-input-error' : ''}`}
             />
+            {errors.zipCode && <p className="error-message">{errors.zipCode}</p>}
           </div>
 
           <div>
-            <label htmlFor="country" className="block text-sm font-bold mb-2">Nazione:</label>
+            <label htmlFor="country" className="block text-sm font-bold mb-2">
+              Nazione: <span className="text-red-500">*</span>
+            </label>
             <select
               id="country"
               name="country"
               value={formData.country}
               onChange={handleChange}
-              className="form-input"
+              className={`form-input ${errors.country ? 'form-input-error' : ''}`}
             >
               <option value="">Seleziona una nazione</option>
               {countries.map(country => (
@@ -285,39 +311,49 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
                 </option>
               ))}
             </select>
+            {errors.country && <p className="error-message">{errors.country}</p>}
           </div>
 
           <div>
-            <label htmlFor="phoneNumber" className="block text-sm font-bold mb-2">Numero di Telefono:</label>
+            <label htmlFor="phoneNumber" className="block text-sm font-bold mb-2">
+              Numero di Telefono: <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               id="phoneNumber"
               name="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleChange}
-              className="form-input"
+              className={`form-input ${errors.phoneNumber ? 'form-input-error' : ''}`}
             />
+            {errors.phoneNumber && <p className="error-message">{errors.phoneNumber}</p>}
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-bold mb-2">Email:</label>
+            <label htmlFor="email" className="block text-sm font-bold mb-2">
+              Email: <span className="text-red-500">*</span>
+            </label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className={`form-input ${errors.email ? 'border-red-500' : ''}`}
+              className={`form-input ${errors.email ? 'form-input-error' : ''}`}
             />
-            {errors.email && <p className="text-red-500 text-xs italic">{errors.email}</p>}
+            {errors.email && <p className="error-message">{errors.email}</p>}
           </div>
 
-          {/* Nuova sezione per il metodo di pagamento */}
           <div className="border-t pt-4">
-            <h3 className="text-xl font-semibold mb-4">Metodo di Pagamento</h3>
-            <div className="space-y-3">
+            <h3 className="text-xl font-semibold mb-4">
+              Metodo di Pagamento <span className="text-red-500">*</span>
+            </h3>
+            <div className={`space-y-3 ${errors.paymentMethod ? 'form-input-error p-3 rounded-lg' : ''}`}>
               {paymentMethods.map(method => (
-                <label key={method.value} className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                <label
+                  key={method.value}
+                  className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer ${paymentMethod === method.value ? 'border-blue-500' : 'hover:bg-gray-50'}`}
+                >
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -335,7 +371,7 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
                 </label>
               ))}
             </div>
-            {errors.paymentMethod && <p className="text-red-500 text-xs italic mt-2">{errors.paymentMethod}</p>}
+            {errors.paymentMethod && <p className="error-message">{errors.paymentMethod}</p>}
           </div>
 
           {user && (
@@ -351,7 +387,7 @@ const Checkout = ({ cartItems, onClearCart, user }) => {
               </label>
             </div>
           )}
-          
+
           <button
             type="submit"
             className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline mt-4"
