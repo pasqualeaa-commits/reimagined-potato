@@ -17,7 +17,7 @@ const CommentForm = ({ onAddComment }) => {
     const newComment = {
       rating,
       comment,
-      is_anonymous: isAnonymous,
+      isAnonymous: isAnonymous,
       author: isAnonymous ? 'Utente Anonimo' : authorName.trim() || 'Utente Sconosciuto',
     };
 
