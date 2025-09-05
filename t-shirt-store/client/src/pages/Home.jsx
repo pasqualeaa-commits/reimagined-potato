@@ -6,8 +6,10 @@ import { FaStar } from 'react-icons/fa';
 
 const Home = ({ user }) => {
   const [comments, setComments] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const commentsPerPage = 5;
+  const [filterRating, setFilterRating] = useState('all');
 
-  // Fetch dei commenti dal backend all'avvio del componente
   useEffect(() => {
     fetchComments();
   }, []);
@@ -19,7 +21,7 @@ const Home = ({ user }) => {
         throw new Error('Errore durante il recupero dei commenti');
       }
       const data = await response.json();
-      setComments(data);
+      setComments(data.reverse()); // Mostra i commenti più recenti per primi
     } catch (error) {
       console.error('Fetch comments error:', error);
     }
@@ -42,6 +44,38 @@ const Home = ({ user }) => {
     } catch (error) {
       console.error('Add comment error:', error);
     }
+  };
+
+  // Logica di filtro e paginazione
+  const filteredComments = comments.filter(comment => {
+    if (filterRating === 'all') {
+      return true;
+    }
+    return comment.rating === parseInt(filterRating, 10);
+  });
+
+  const indexOfLastComment = currentPage * commentsPerPage;
+  const indexOfFirstComment = indexOfLastComment - commentsPerPage;
+  const currentComments = filteredComments.slice(indexOfFirstComment, indexOfLastComment);
+
+  const totalPages = Math.ceil(filteredComments.length / commentsPerPage);
+
+  const renderCommentPageNumbers = () => {
+    const pageNumbers = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pageNumbers.push(i);
+    }
+    return pageNumbers.map(number => (
+      <button
+        key={number}
+        onClick={() => setCurrentPage(number)}
+        className={
+          currentPage === number ? "page-number active" : "page-number"
+        }
+      >
+        {number}
+      </button>
+    ));
   };
 
   return (
@@ -93,11 +127,32 @@ const Home = ({ user }) => {
         <div className="comment-form-container">
           <CommentForm onAddComment={addComment} />
         </div>
+
+        {/* Filtri per i commenti */}
+        <div className="comments-filters">
+          <label htmlFor="rating-filter">Filtra per Voto:</label>
+          <select
+            id="rating-filter"
+            value={filterRating}
+            onChange={(e) => {
+              setFilterRating(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="rating-select"
+          >
+            <option value="all">Tutti</option>
+            <option value="5">5 Stelle</option>
+            <option value="4">4 Stelle</option>
+            <option value="3">3 Stelle</option>
+            <option value="2">2 Stelle</option>
+            <option value="1">1 Stella</option>
+          </select>
+        </div>
         
         {/* Lista dei commenti esistenti */}
         <div className="comments-list">
-          {comments.length > 0 ? (
-            comments.map((comment) => (
+          {currentComments.length > 0 ? (
+            currentComments.map((comment) => (
               <div key={comment.id} className="comment-card">
                 <div className="comment-header">
                   <div className="comment-author">
@@ -118,10 +173,33 @@ const Home = ({ user }) => {
             ))
           ) : (
             <p className="no-comments">
-              Ancora nessuna recensione. Sii il primo a condividere la tua esperienza!
+              Nessuna recensione trovata. Sii il primo a condividere la tua esperienza!
             </p>
           )}
         </div>
+
+        {/* Controlli per la paginazione dei commenti */}
+        {filteredComments.length > commentsPerPage && (
+          <div className="pagination">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="pagination-button prev"
+            >
+              &lt;
+            </button>
+            <div className="page-numbers">{renderCommentPageNumbers()}</div>
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+              }
+              disabled={currentPage === totalPages}
+              className="pagination-button next"
+            >
+              &gt;
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

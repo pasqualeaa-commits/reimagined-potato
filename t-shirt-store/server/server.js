@@ -476,9 +476,7 @@ app.post("/api/forgot-password", async (req, res) => {
       [token, new Date(expiration), user.id]
     );
 
-    const resetUrl = `${req.protocol}://${req.get(
-      "host"
-    )}/reset-password/${token}`;
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
     const mailOptions = {
       to: user.email,
