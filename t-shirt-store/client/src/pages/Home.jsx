@@ -14,7 +14,7 @@ const Home = ({ user }) => {
 
   const fetchComments = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/comments');
+      const response = await fetch('https://reimagined-potato-1.onrender.com/api/comments');
       if (!response.ok) {
         throw new Error('Errore durante il recupero dei commenti');
       }
@@ -27,7 +27,7 @@ const Home = ({ user }) => {
 
   const addComment = async (newComment) => {
     try {
-      const response = await fetch('http://localhost:3001/api/comments', {
+      const response = await fetch('https://reimagined-potato-1.onrender.com/api/comments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
