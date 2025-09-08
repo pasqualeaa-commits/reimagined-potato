@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import CommentForm from '../components/CommentForm';
-import StarRating from '../components/StarRating';
-import { FaStar } from 'react-icons/fa';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import CommentForm from "../components/CommentForm";
+import StarRating from "../components/StarRating";
+import { FaStar } from "react-icons/fa";
 
 const Home = ({ user }) => {
   const [comments, setComments] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const commentsPerPage = 5;
-  const [filterRating, setFilterRating] = useState('all');
+  const [filterRating, setFilterRating] = useState("all");
 
   useEffect(() => {
     fetchComments();
@@ -16,39 +16,47 @@ const Home = ({ user }) => {
 
   const fetchComments = async () => {
     try {
-      const response = await fetch('https://reimagined-potato-1.onrender.com/api/comments');
+      const response = await fetch(
+        "https://reimagined-potato-1.onrender.com/api/comments"
+      );
       if (!response.ok) {
-        throw new Error('Errore durante il recupero dei commenti');
+        throw new Error("Errore durante il recupero dei commenti");
       }
       const data = await response.json();
-      setComments(data.reverse()); // Mostra i commenti più recenti per primi
+      const sortedComments = data.sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      setComments(sortedComments);
     } catch (error) {
-      console.error('Fetch comments error:', error);
+      console.error("Fetch comments error:", error);
     }
   };
 
   const addComment = async (newComment) => {
     try {
-      const response = await fetch('https://reimagined-potato-1.onrender.com/api/comments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newComment),
-      });
+      const response = await fetch(
+        "https://reimagined-potato-1.onrender.com/api/comments",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newComment),
+        }
+      );
       if (!response.ok) {
-        throw new Error('Errore durante l\'invio del commento');
+        throw new Error("Errore durante l'invio del commento");
       }
       const savedComment = await response.json();
       setComments([savedComment, ...comments]);
     } catch (error) {
-      console.error('Add comment error:', error);
+      console.error("Add comment error:", error);
     }
   };
 
   // Logica di filtro e paginazione
-  const filteredComments = comments.filter(comment => {
-    if (filterRating === 'all') {
+  const filteredComments = comments.filter((comment) => {
+    if (filterRating === "all") {
       return true;
     }
     return comment.rating === parseInt(filterRating, 10);
@@ -56,7 +64,10 @@ const Home = ({ user }) => {
 
   const indexOfLastComment = currentPage * commentsPerPage;
   const indexOfFirstComment = indexOfLastComment - commentsPerPage;
-  const currentComments = filteredComments.slice(indexOfFirstComment, indexOfLastComment);
+  const currentComments = filteredComments.slice(
+    indexOfFirstComment,
+    indexOfLastComment
+  );
 
   const totalPages = Math.ceil(filteredComments.length / commentsPerPage);
 
@@ -65,7 +76,7 @@ const Home = ({ user }) => {
     for (let i = 1; i <= totalPages; i++) {
       pageNumbers.push(i);
     }
-    return pageNumbers.map(number => (
+    return pageNumbers.map((number) => (
       <button
         key={number}
         onClick={() => setCurrentPage(number)}
@@ -83,7 +94,7 @@ const Home = ({ user }) => {
       <h2 className="text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
         {user
           ? `Benvenuto in Lost in Translation, ${user.firstName}!`
-          : 'Benvenuto in Lost in Translation!'}
+          : "Benvenuto in Lost in Translation!"}
       </h2>
       <p className="text-xl text-gray-600 mb-10 max-w-2xl">
         Scopri la nostra selezione curata di prodotti unici e di alta qualità.
@@ -91,7 +102,10 @@ const Home = ({ user }) => {
 
       <div className="w-full max-w-4xl mb-12 rounded-2xl overflow-hidden shadow-2xl transition-transform duration-500 ease-in-out transform hover:scale-102">
         <video className="w-full h-auto" controls autoPlay loop muted>
-          <source src="https://res.cloudinary.com/dezd83teo/video/upload/v1756455525/samples/dance-2.mp4" type="video/mp4" />
+          <source
+            src="https://res.cloudinary.com/dezd83teo/video/upload/v1756455525/samples/dance-2.mp4"
+            type="video/mp4"
+          />
           Il tuo browser non supporta il tag video.
         </video>
       </div>
@@ -106,11 +120,17 @@ const Home = ({ user }) => {
       <div className="mt-6 flex space-x-4">
         {!user && (
           <>
-            <Link to="/login" className="text-blue-600 hover:text-blue-800 font-medium transition duration-200">
+            <Link
+              to="/login"
+              className="text-blue-600 hover:text-blue-800 font-medium transition duration-200"
+            >
               Accedi
             </Link>
             <span className="text-gray-400">|</span>
-            <Link to="/register" className="text-blue-600 hover:text-blue-800 font-medium transition duration-200">
+            <Link
+              to="/register"
+              className="text-blue-600 hover:text-blue-800 font-medium transition duration-200"
+            >
               Registrati
             </Link>
           </>
@@ -119,10 +139,8 @@ const Home = ({ user }) => {
 
       {/* Sezione Commenti e Recensioni */}
       <div className="comments-section">
-        <h2 className="comments-title">
-          Cosa dicono i nostri clienti
-        </h2>
-        
+        <h2 className="comments-title">Cosa dicono i nostri clienti</h2>
+
         {/* Componente per l'aggiunta di un commento */}
         <div className="comment-form-container">
           <CommentForm onAddComment={addComment} />
@@ -148,7 +166,7 @@ const Home = ({ user }) => {
             <option value="1">1 Stella</option>
           </select>
         </div>
-        
+
         {/* Lista dei commenti esistenti */}
         <div className="comments-list">
           {currentComments.length > 0 ? (
@@ -158,22 +176,23 @@ const Home = ({ user }) => {
                   <div className="comment-author">
                     <span className="mr-2">{comment.author}</span>
                     {comment.is_anonymous && (
-                        <span className="comment-anonymous-tag">Anonimo</span>
+                      <span className="comment-anonymous-tag">Anonimo</span>
                     )}
                   </div>
-                  <div className="comment-date">{new Date(comment.created_at).toLocaleDateString('it-IT')}</div>
+                  <div className="comment-date">
+                    {new Date(comment.created_at).toLocaleDateString("it-IT")}
+                  </div>
                 </div>
                 <div className="comment-rating">
                   <StarRating rating={comment.rating} readOnly={true} />
                 </div>
-                <p className="comment-text">
-                  "{comment.comment}"
-                </p>
+                <p className="comment-text">"{comment.comment}"</p>
               </div>
             ))
           ) : (
             <p className="no-comments">
-              Nessuna recensione trovata. Sii il primo a condividere la tua esperienza!
+              Nessuna recensione trovata. Sii il primo a condividere la tua
+              esperienza!
             </p>
           )}
         </div>
