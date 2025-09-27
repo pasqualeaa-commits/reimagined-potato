@@ -2,14 +2,16 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
 const { Pool } = require("pg");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const { Resend } = require('resend');
 
 const app = express();
 const port = 3001;
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Configurazione del pool di connessioni PostgreSQL
 const pool = new Pool({
@@ -150,22 +152,6 @@ const setupDatabase = async () => {
   }
 };
 
-// Configurazione Nodemailer
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-transporter.verify(function (error, success) {
-  if (error) {
-    console.log(error);
-  } else {
-    console.log("Server is ready to take our messages");
-  }
-});
 
 // Middleware
 app.use(cors());
@@ -497,16 +483,21 @@ app.post("/api/forgot-password", async (req, res) => {
         `Se non hai richiesto tu questa operazione, ignora questa email e la tua password rimarrà invariata.\n`,
     };
 
-    transporter.sendMail(mailOptions, (err, response) => {
-      if (err) {
-        console.error("Errore invio email:", err);
-        return res.status(500).json({ error: "Errore nell'invio dell'email." });
-      }
-      res.json({
-        message:
-          "Se l'email è registrata, riceverai un link per reimpostare la password.",
-      });
-    });
+   try {
+  await resend.emails.send({
+    from: process.env.EMAIL_USER,
+    to: mailOptions.to,
+    subject: mailOptions.subject,
+    text: mailOptions.text,
+  });
+  res.json({
+    message:
+      "Se l'email è registrata, riceverai un link per reimpostare la password.",
+  });
+} catch (err) {
+  console.error("Errore invio email (Resend):", err);
+  return res.status(500).json({ error: "Errore nell'invio dell'email." });
+}
   } catch (err) {
     console.error("Errore durante il recupero della password:", err);
     res.status(500).json({ error: "Errore durante la richiesta." });
@@ -706,8 +697,6 @@ app.post("/api/orders", async (req, res) => {
     // Email di conferma con metodo di pagamento incluso
     const paymentMethodText = formatPaymentMethod(paymentMethod);
     const mailOptions = {
-      to: customerData.email,
-      from: process.env.EMAIL_USER,
       subject: "Conferma del tuo ordine",
       text:
         `Grazie per il tuo ordine! Il tuo ordine numero ${orderId} è stato confermato con successo.\n\n` +
@@ -728,11 +717,15 @@ app.post("/api/orders", async (req, res) => {
     };
 
     try {
-      await transporter.sendMail(mailOptions);
-      console.log("Email di conferma ordine inviata con successo.");
+      await resend.emails.send({
+        from: process.env.EMAIL_USER,
+        to: customerData.email,
+        subject: mailOptions.subject,
+        text: mailOptions.text,
+      });
+      console.log("Email di conferma ordine inviata con successo (Resend).");
     } catch (emailErr) {
-      console.error("Errore nell'invio dell'email di conferma:", emailErr);
-      // Non c'è bisogno di fare il rollback del database, l'ordine è già salvato.
+      console.error("Errore nell'invio dell'email di conferma (Resend):", emailErr);
     }
 
     res
