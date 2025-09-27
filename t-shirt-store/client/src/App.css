@@ -1,8 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Custom animations for a modern touch */
 @layer utilities {
   .animate-fade-in {
     animation: fadeIn 0.5s ease-out forwards;
@@ -123,16 +118,30 @@ body {
   gap: 1rem;
 }
 
+/* Burger button sempre visibile su mobile */
 .menu-toggle {
-  display: none;
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   cursor: pointer;
   color: #333;
-  z-index: 1001; /* Assicura che sia sopra il menu */
+  z-index: 1001;
 }
 
+/* Nascondi il burger su desktop */
+@media (min-width: 769px) {
+  .menu-toggle {
+    display: none;
+  }
+}
+
+/* Nav links desktop */
 .nav-links {
   list-style: none;
   padding: 0;
@@ -142,18 +151,52 @@ body {
   align-items: center;
 }
 
+/* Nav links mobile off-canvas */
+@media (max-width: 768px) {
+  .nav-links {
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 75vw;
+    max-width: 320px;
+    background-color: #fff;
+    box-shadow: 2px 0 16px rgba(0,0,0,0.15);
+    border-right: 1px solid #ddd;
+    z-index: 2000;
+    margin: 0;
+    padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    display: flex;
+  }
+  .nav-links.open {
+    transform: translateX(0);
+  }
+  .nav-links-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.25);
+    z-index: 1500;
+    display: block;
+  }
+}
+
+/* Nav link style */
 .nav-link {
   text-decoration: none;
   color: #333;
   font-weight: bold;
   padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: background 0.2s;
 }
-
 .nav-link:hover {
   background-color: #f0f0f0;
-  border-radius: 4px;
 }
 
+/* Cart icon */
 .cart-link {
   position: relative;
   display: flex;
@@ -161,7 +204,6 @@ body {
   font-size: 1.5rem;
   padding: 0.5rem;
 }
-
 .cart-count {
   position: absolute;
   top: -8px;
@@ -173,6 +215,7 @@ body {
   font-size: 0.8rem;
 }
 
+/* Logout button */
 .logout-button {
   background-color: #f44336;
   color: white;
@@ -740,6 +783,11 @@ button[type="submit"]:hover {
     display: block;
     margin-right: 0.75rem;
     flex-shrink: 0;
+    font-size: 1.25rem;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
   }
 
   /* Carrello a destra */
@@ -776,23 +824,32 @@ button[type="submit"]:hover {
 
   /* Link del menu: posizionati assolutamente rispetto all'header */
   .nav-links {
-    display: none !important;
     flex-direction: column;
-    position: absolute;
-    top: calc(100% + 1px); /* Subito sotto l'header */
-    left: 0; /* Allinea a sinistra sotto il menu hamburger */
-    right: 0; /* Occupa tutta la larghezza */
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 75vw;
+    max-width: 320px;
     background-color: #fff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border-top: 1px solid #ddd;
-    z-index: 1000;
+    box-shadow: 2px 0 16px rgba(0,0,0,0.15);
+    border-right: 1px solid #ddd;
+    z-index: 2000;
     margin: 0;
-    padding: 0;
+    padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
   }
-
-  /* Menu aperto */
   .nav-links.open {
-    display: flex !important;
+    transform: translateX(0);
+  }
+  /* Per coprire il resto della pagina quando il menu è aperto */
+  .nav-links-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.25);
+    z-index: 1500;
+    display: block;
   }
 
   /* Styling dei link nel menu mobile */
@@ -1708,88 +1765,6 @@ button[type="submit"]:hover {
   font-size: 1.125rem;
   padding: 3rem 1rem;
   font-style: italic;
-}
-
-/* Mobile-optimized pagination */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 2rem;
-  gap: 0.5rem;
-  padding: 0 1rem;
-  flex-wrap: wrap; /* Allow wrapping if needed */
-}
-
-.pagination-button {
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background-color: #ffffff;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 600;
-  min-width: 44px; /* Ensure touch-friendly size */
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
-  transform: translateY(-1px);
-}
-
-.pagination-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-button:active {
-  transform: translateY(0);
-}
-
-.page-numbers {
-  display: flex;
-  gap: 0.25rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.page-number {
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background-color: #ffffff;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 600;
-  min-width: 44px;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.page-number.active {
-  background-color: #3b82f6;
-  color: #ffffff;
-  border-color: #3b82f6;
-  transform: scale(1.05);
-}
-
-.page-number:hover:not(.active) {
-  background-color: #dbeafe;
-  border-color: #93c5fd;
-  transform: translateY(-1px);
-}
-
-.page-number:active {
-  transform: translateY(0);
 }
 
 /* Mobile-specific optimizations */

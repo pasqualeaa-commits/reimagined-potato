@@ -28,9 +28,19 @@ const Header = ({ cartCount, user, onLogout }) => {
         <Link to="/" className="shop-name">Lost in Translation</Link>
       </div>
 
+      {/* Backdrop per off-canvas menu */}
+      {isMenuOpen && (
+        <div
+          className="nav-links-backdrop"
+          onClick={closeMenu}
+          aria-label="Chiudi menu"
+          tabIndex={-1}
+        />
+      )}
+
       {/* Lato destro: carrello + (menu UL che si apre in mobile) */}
       <nav className="navbar">
-        <ul className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
+        <ul className={`nav-links${isMenuOpen ? ' open' : ''}`}>
               <li><Link to="/products" className="nav-link" onClick={closeMenu}>Prodotti</Link></li>
               <li><Link to="/contact" className="nav-link" onClick={closeMenu}>Contattaci</Link></li>
               <li><Link to="/about" className="nav-link" onClick={closeMenu}>Chi Siamo</Link></li>
@@ -49,7 +59,7 @@ const Header = ({ cartCount, user, onLogout }) => {
             </>
           )}
         </ul>
-         <Link to="/cart" className="cart-link" onClick={closeMenu} aria-label="Carrello">
+        <Link to="/cart" className="cart-link" onClick={closeMenu} aria-label="Carrello">
           <FaShoppingCart />
           {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
         </Link>
