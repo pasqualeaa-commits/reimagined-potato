@@ -16,7 +16,13 @@ const ProductDetail = ({ onAddToCart }) => {
           ? res.data.languages.split(",").map(l => l.trim())
           : res.data.languages;
         setSelectedLanguage(langs[0]);
-        setSelectedSize(res.data.sizes?.split(",")[0] || "");
+        
+        // CORREZIONE 1 APPLICATA QUI
+        const productSizes = Array.isArray(res.data.sizes) 
+            ? res.data.sizes
+            : (typeof res.data.sizes === "string" ? res.data.sizes.split(",") : []);
+
+        setSelectedSize(productSizes[0] || "");
       })
       .catch(err => console.error('Errore caricamento prodotto:', err));
   }, [productId]);
@@ -27,9 +33,12 @@ const ProductDetail = ({ onAddToCart }) => {
     ? product.languages.split(",").map(l => l.trim())
     : product.languages;
 
-  const sizes = typeof product.sizes === "string"
-    ? product.sizes.split(",").map(s => s.trim())
-    : product.sizes;
+  // CORREZIONE 1 APPLICATA QUI (sulle righe 30-34)
+  const sizes = Array.isArray(product.sizes)
+    ? product.sizes
+    : (typeof product.sizes === "string"
+        ? product.sizes.split(",").map(s => s.trim())
+        : []);
 
   // Cambia solo l'immagine in base alla lingua selezionata
   const description = product.description; 

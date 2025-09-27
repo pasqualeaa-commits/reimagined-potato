@@ -12,8 +12,17 @@ const Cart = ({ cartItems, onRemoveFromCart, onUpdateQuantity }) => {
         <>
           <div className="cart-items mb-8">
             {cartItems.map(item => {
-              // Parsa la stringa 'images' in un oggetto JSON
-              const parsedImages = item.images ? JSON.parse(item.images) : {};
+              // Se item.images è già un oggetto, usalo direttamente
+              let parsedImages = {};
+              if (typeof item.images === "string") {
+                try {
+                  parsedImages = JSON.parse(item.images);
+                } catch {
+                  parsedImages = {};
+                }
+              } else if (typeof item.images === "object" && item.images !== null) {
+                parsedImages = item.images;
+              }
               const imageUrl = parsedImages[item.language] || item.coverimage;
 
               return (
